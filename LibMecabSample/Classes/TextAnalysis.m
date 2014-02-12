@@ -13,7 +13,10 @@
 NSString *strAllText;
 NSArray *arrSentence;
 
-NSMutableArray *arrStrToken;
+NSMutableArray *arrStrToken;//文章区切り
+NSMutableArray *arrStrSemiToken;//文節区切り
+NSMutableArray *arrStrIgnor;//無視語句
+
 
 -(id)initWithText:(NSString *)_strAllText{
     
@@ -29,6 +32,16 @@ NSMutableArray *arrStrToken;
          @"。",
          @"「",
          @"」",
+         nil];
+        
+        arrStrSemiToken =
+        [NSMutableArray arrayWithObjects:
+         @"、",
+         nil];
+        
+        //無視語
+        arrStrIgnor =
+        [NSMutableArray arrayWithObjects:
          @" ",//半角スペース
          @"　",//全角スペース
          nil];
@@ -40,7 +53,7 @@ NSMutableArray *arrStrToken;
     return self;
 }
 
-- (NSArray *)getEachLine:(NSString*)string
+- (NSMutableArray *)getEachLine:(NSString*)string
 {
     //http://hmdt.jp/cocoaProg/Foundation/NSString/NSString.html
     NSMutableArray *arrStrEachLine = [NSMutableArray array];
@@ -70,75 +83,7 @@ NSMutableArray *arrStrToken;
     return arrStrEachLine;
 }
 
--(NSArray *)stringTokenizerFor:(NSString *)str by:(NSString *)token{
-    return [str componentsSeparatedByString:token];
-}
 
-
-//methodology
-//1.文字列を分解する
-//2.配列を分解する
--(NSArray *)stringTokenizerFor:(NSString *)str
-                    complexBy:(NSMutableArray *)tokens{
-    
-    NSLog(@"arrayTokenizerFor%@", str);
-//    NSMutableArray *arrReturn = [NSMutableArray array];
-    NSMutableArray *arrReturn = [NSMutableArray array];
-//    NSMutableArray *_arrTokens = [NSMutableArray array];
-//    for(int i = 0;i < [tokens count];i++){
-//        [_arrTokens addObject:tokens[i]];
-//    }
-    
-//    for(int noToken = 0; noToken < [tokens count];noToken++){
-//        NSString *token = tokens[noToken];
-    NSString *token = tokens[0];
-    NSLog(@"token=%@", token);
-    
-    
-    NSArray *arrTmp = [self stringTokenizerFor:str
-                                            by:token];
-    NSLog(@"str=%@=>devideTo%d", str, [arrTmp count]);
-//    for(int i = 0;i < [arrTmp count];i++){
-//        if([arrTmp[i] length] == 0){
-//            
-//        }
-//    }
-    
-    for(NSString *_str in arrTmp){
-        NSLog(@"_str=%@", _str);
-    }
-    
-    //それ以外のトークン
-//    [tokens removeObject:token];
-    
-    
-    //それ以外のトークンで分割する
-    if([tokens count] > 0){//まだトークンが残っている場合、それらのトークンで分解する
-        for(int noTerm = 0;noTerm < [arrTmp count];noTerm++){
-            if([((NSString *)arrTmp[noTerm]) length] > 0){
-                //分割された文字に対して次のトークンを適用する
-                
-                //再帰構造
-                NSArray *tmp = [self arrayTokenizerFor:arrTmp[noTerm]
-                                             complexBy:tokens];
-                
-                
-                if([tmp count] == 1){
-                    NSLog(@"tmp0=%@", tmp[0]);//test
-                    [arrReturn addObject:tmp[0]];
-                    
-                    for(int i = 0;i < [arrReturn count];i++){//test
-                        NSLog(@"arrReturn%d = %@", i, arrReturn[i]);
-                    }
-                }
-            }
-        }
-    }
-    
-    return arrReturn;
-}
-
-//methodology2
 -(NSMutableArray *)arrayTokenizerFor:(NSMutableArray *)arrStr
                     complexBy:(NSMutableArray *)tokens{
     
@@ -147,135 +92,90 @@ NSMutableArray *arrStrToken;
         [arrReturn addObject:arrStr[i]];
     }
     
-//    for(int i =0;i < [arrReturn count];i++){
-    int i = 0;
-    for(;i<[arrReturn count];){
-//        NSString *strTmp = (NSString *)arrReturn[i];
-        NSLog(@"arrReturn%d = strTmp=%@, length=%d",i, arrReturn[i], [arrReturn[i] length]);
-        if([arrReturn[i] length]>0){//文字列が空でなければ
-            NSLog(@"arrReturn count=%d", [arrReturn count]);
-            for(int j = 0;j < [tokens count];){//全てのトークンに対して
-                NSRange range = [arrReturn[i] rangeOfString:tokens[j]];//トークン検索
-                NSLog(@"arrReturn%d=%@, tokens%d is %@, range=%d",
-                      i,
-                      arrReturn[i],
-                      j,
-                      tokens[j],
-                      range.location);
-                if(range.location != NSNotFound) {//トークンが含まれていれば
-                    //文字を当該トークンで分割した配列を作成
-                    NSLog(@"aaa");
-                    NSArray *arrTokenized =
-                    [arrReturn[i] componentsSeparatedByString:tokens[j]];
+    if([arrReturn count] == 0 ||
+       [tokens count] == 0){
+        return nil;
+    }
+    
+    for(int j = 0;j < [tokens count];j++){//全てのトークンに対して
+        for(int k = 0;k < [arrReturn count];k++){
+            NSRange range = [arrReturn[k] rangeOfString:tokens[j]];//トークン検索
+            if(range.location != NSNotFound) {//トークンが含まれていれば
+                //文字を当該トークンで分割した配列を作成
+                NSArray *arrTokenized =
+                [arrReturn[k] componentsSeparatedByString:tokens[j]];
+                
+                
+                if([arrTokenized count] != 1){//分割できた場合
+                    //その要素を削除して、代わりに分割された値を格納する
                     
-                    NSLog(@"bbb");
-                    [tokens removeObject:tokens[j]];
-                    //もしくは
-//                    NSMutableArray *_arrTokens = [NSMutableArray array];
-//                    for(int _j = 0; _j < [tokens count];_j++){
-//                        if(_j != j){
-//                            [_arrTokens addObject:tokens[_j]];
-//                        }
-//                    }
-                    NSLog(@"ccc");
-                    if([arrTokenized count] != 1){//分割できた場合
-                        //test
-                        NSLog(@"remove%d = %@", i, arrReturn[i]);
-                        
-                        
-//                        NSArray
-                        [arrReturn removeObjectAtIndex:i];
-                        
-                        
-                        //ケツからinsertすることで順番通りにさせる
-                        for(int L = [arrTokenized count]-1;L >= 0;L--){
-                            if([arrTokenized[L] length] != 0){
-                                [arrReturn insertObject:arrTokenized[L]
-                                                atIndex:i];
-                                
-                                NSLog(@"index%d is removed and insert %@",i,  arrReturn[i]);
-                            }
+                    //まずは削除
+                    [arrReturn removeObjectAtIndex:k];
+                    
+                    
+                    //ケツからinsertすることで順番通りにさせる
+                    for(int L = [arrTokenized count]-1;L >= 0;L--){
+                        if([arrTokenized[L] length] != 0){
+                            [arrReturn insertObject:arrTokenized[L]
+                                            atIndex:k];
                         }
-                        
-                        
                     }
                     
-                    //確認
-                    for(int L = 0;L < [arrReturn count];L++){
-                        NSLog(@"test:arrReturn%d is %@", L, arrReturn[L]);
-                    }
-//                    
-//                    //全ての分割された文字列に対して
-//                    for(int k = 0;k < [arrTokenized count];k++){
-//                        
-//                        
-//                        [arrReturn addObject:arrTokenized[k]];
-//                        NSLog(@"arrTokenized%d=%@", k, arrTokenized[k]);
-//                    }
-//                    //分割された文字に対して、それ以外のトークンで分解
-//                    
-//                    
-//                    
-//                    //それ以外のトークンを作成
-//                    
-//                    
-//                    
-//                    NSMutableArray *_arrReturn =
-//                    [self arrayTokenizerFor:arrReturn
-//                                  complexBy:_arrTokens];
                     
-                }else{//トークンが含まれていなければ検索対象を次の文字にする
-                    i++;
                 }
-            }//for-j
+                
+            }//if(range.location != NSNotFound) {//トークンが含まれていれば
         }
-    }
+    }//for-j
     
     
-    for(int i =0;i < [arrReturn count];i++){
-        NSLog(@"arrReturn%d is %@", i, arrReturn[i]);
-    }
     
-    return nil;
+    return arrReturn;
 }
 
 -(NSArray *)getArrSentence{
     @autoreleasepool {
         
         
-//        NSArray *arrStrEachLine = [self getEachLine:strAllText];
-//        NSLog(@"complete getEachLine");
+        //行毎に抽出
+        NSMutableArray *strEachLine =
+        [self getEachLine:strAllText];
         
-        //test
-        NSString *str = @"b11a22c33";
-        NSMutableArray *arraytest =
-        [NSMutableArray arrayWithObjects:
-         @"a",
-         @"b",
-         @"c",
-         nil];
-        [self arrayTokenizerFor:[NSMutableArray arrayWithObjects:str,nil]
-                      complexBy:arraytest];
-//        [self arrayTokenizerFor:str
+        for(int i = 0;i < [strEachLine count];i++){
+            //空のものを削除(半角、全角スペースはarrayTokenizerによって削除される)
+            if([strEachLine[i] length] == 0){
+                [strEachLine removeObjectAtIndex:i];
+            }
+        }
+        
+        strEachLine =
+        [self arrayTokenizerFor:strEachLine
+                      complexBy:arrStrToken];
+        
+        
+//        
+//        
+//        //test
+//        NSString *str = @"ba11ab32cb2c3c3";
+//        NSMutableArray *arraytest =
+//        [NSMutableArray arrayWithObjects:
+//         @"ab",
+//         @"b",
+//         @"c",
+//         nil];
+//        NSMutableArray *arr =
+//        [self arrayTokenizerFor:[NSMutableArray arrayWithObjects:str,nil]
 //                      complexBy:arraytest];
-//        [self arrayTokenizerFor:arrStrEachLine[0]
-//                      complexBy:arrStrToken];
         
         
         
         
-//        return arrStrEachLine;
+        for(int i = 0;i < [strEachLine count];i++){
+            NSLog(@"strEachLine%d is 「%@」", i, strEachLine[i]);
+        }
         
-//        for(int i =0;i < [arrStrEachLine count];i++){
-////            NSString* string = @"abc, def gh,ijk";
-//            NSEnumerator* enumerator = [(NSString *)arrStrEachLine[i]
-//                                        tokenize:@", "];
-//            id token;
-//            
-//            while((token = [enumerator nextObject])) {
-//                NSLog(@"%@", token);
-//            }
-//        }
+        
+        
         
         
         
