@@ -224,12 +224,10 @@ NSMutableArray *arrStrToken;
 //                    [self arrayTokenizerFor:arrReturn
 //                                  complexBy:_arrTokens];
                     
-                }else{//トークンが含まれていなければ
-                    //do nothing
-                    //当該文字は既に全てのトークンを含んでいないのでarrReturnに追加
-//                    [arrReturn addObject:strTmp];
+                }else{//トークンが含まれていなければ検索対象を次の文字にする
+                    i++;
                 }
-            }
+            }//for-j
         }
     }
     
