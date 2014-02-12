@@ -8,6 +8,8 @@
 
 //#import "HMDTString.h"
 #import <Foundation/Foundation.h>
+#import "Node.h"
+#import "Mecab.h"
 
 @interface TextAnalysis : NSObject
 

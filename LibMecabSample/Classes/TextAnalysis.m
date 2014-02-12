@@ -30,13 +30,13 @@ NSMutableArray *arrStrIgnor;//無視語句
         [NSMutableArray arrayWithObjects:
          @"\n",
          @"。",
-         @"「",
-         @"」",
          nil];
         
         arrStrSemiToken =
         [NSMutableArray arrayWithObjects:
          @"、",
+         @"「",
+         @"」",
          nil];
         
         //無視語
@@ -44,9 +44,21 @@ NSMutableArray *arrStrIgnor;//無視語句
         [NSMutableArray arrayWithObjects:
          @" ",//半角スペース
          @"　",//全角スペース
+         @"\n",//改行
          nil];
         
+        //通常の文字列分解
         arrSentence = [self getArrSentence];
+        for(int i = 0;i < [arrSentence count];i++){
+            NSLog(@"sentence%d is %@", i, [arrSentence objectAtIndex:i]);
+        }
+        
+        
+        //mecabを使って分解
+        NSArray *arrNodes = [self getUniqueNounFromArray:arrSentence];
+        for(int i =0;i < [arrNodes count];i++){
+            NSLog(@"noun%d is %@", i, ((Node *)arrNodes[i]).surface);
+        }
         
     }
     
@@ -71,9 +83,13 @@ NSMutableArray *arrStrIgnor;//無視語句
                     NSMakeRange(range.location, 0)];
         parsedString = [string substringWithRange:subrange];
         
-        NSLog(@"line%d:%@",noLine, parsedString);
-//        printf("line: %s¥n", [parsedString cString]);
-        [arrStrEachLine addObject:parsedString];
+        //文章の最後の文字が改行になっているので削除する
+        parsedString = [parsedString substringToIndex:[parsedString length]-1];
+        if([parsedString length] != 0){
+//            NSLog(@"line%d[%d]:[%@]",
+//                  noLine,[parsedString length], parsedString);
+            [arrStrEachLine addObject:parsedString];
+        }
         
         range.location = NSMaxRange(subrange);
         range.length -= subrange.length;
@@ -81,6 +97,15 @@ NSMutableArray *arrStrIgnor;//無視語句
     }
     
     return arrStrEachLine;
+}
+
+-(NSMutableArray *)textTokenizerFor:(NSString *)str
+                          complexBy:(NSMutableArray *)tokens{
+    
+    return [self arrayTokenizerFor:
+            [NSMutableArray arrayWithObjects:str, nil]
+                         complexBy:tokens];
+    
 }
 
 
@@ -136,92 +161,156 @@ NSMutableArray *arrStrIgnor;//無視語句
 -(NSArray *)getArrSentence{
     @autoreleasepool {
         
+        //全角、半角の空白、タブ等はreplaceできないので以下のように接続する方法を採用
         
-        //行毎に抽出
+        //行毎に抽出して配列格納
         NSMutableArray *strEachLine =
         [self getEachLine:strAllText];
         
         for(int i = 0;i < [strEachLine count];i++){
-            //空のものを削除(半角、全角スペースはarrayTokenizerによって削除される)
+            //無視語を削除
+            for(int j =0;j < [arrStrIgnor count];j++){
+//                NSRange range =
+//                [strEachLine[i] rangeOfString:arrStrIgnor[j]];//トークン検索
+//                if(range.location != NSNotFound) {//トークンが含まれている場合
+//                    NSLog(@"replace %@ at %d",
+//                          arrStrIgnor[j],
+//                          range.location);
+//                }
+                [strEachLine[i]
+                 stringByReplacingOccurrencesOfString:arrStrIgnor[j]
+                 withString:@""];
+            }
+            
+            
+            //半角、全角スペースはarrayTokenizerによって削除されないようなので、ここで削除
+            NSArray* words =
+            [strEachLine[i]
+             componentsSeparatedByCharactersInSet :[NSCharacterSet whitespaceCharacterSet]];
+            strEachLine[i] = [words componentsJoinedByString:@""];
+            
+            
+            
+            //無視語を削除した結果、空のものを削除
             if([strEachLine[i] length] == 0){
                 [strEachLine removeObjectAtIndex:i];
             }
+            
         }
         
-        strEachLine =
+        
+        //トークンで分解したものを配列に格納
+        NSArray *arrStrText =
         [self arrayTokenizerFor:strEachLine
                       complexBy:arrStrToken];
         
-        
-//        
-//        
-//        //test
-//        NSString *str = @"ba11ab32cb2c3c3";
-//        NSMutableArray *arraytest =
-//        [NSMutableArray arrayWithObjects:
-//         @"ab",
-//         @"b",
-//         @"c",
-//         nil];
-//        NSMutableArray *arr =
-//        [self arrayTokenizerFor:[NSMutableArray arrayWithObjects:str,nil]
-//                      complexBy:arraytest];
+//        for(int i =0;i < [arrStrText count];i++){//test
+//            NSLog(@"文章%d=[%@]", i, arrStrText[i]);
+//            
+//        }
         
         
+        return arrStrText;
         
-        
-        for(int i = 0;i < [strEachLine count];i++){
-            NSLog(@"strEachLine%d is 「%@」", i, strEachLine[i]);
+    }//autoreleasepool
+}
+
+-(NSArray *)getArrSemiSentence{
+    
+    
+    @autoreleasepool {
+        //文節区切り配列
+        NSArray *arrStrText = [self getArrSentence];
+        NSMutableArray *arrSemiText = [NSMutableArray array];
+        for(int i = 0;i < [arrStrText count];i++){
+            //各文章を文節に区切る
+            NSArray *strTmp =
+            [self textTokenizerFor:arrStrText[i]
+                         complexBy:arrStrSemiToken];
+            //区切った文節を格納する
+            for(int j = 0;j < [strTmp count];j++){
+                [arrSemiText addObject:strTmp[j]];
+            }
         }
         
+        return  arrSemiText;//宣言したのはmutableだがarrayで返す
+    }//autoreleasepool
+}
+
+//mecabによる形態素解析
+//文章単体から品詞に区切られたnode配列を出力
+-(NSArray *)getNode:(NSString *)string{
+    Mecab *mecab = [Mecab new];
+    NSArray *arrNodes = [mecab parseToNodeWithString:string];
+    
+    return arrNodes;
+}
+
+-(NSMutableArray *)getNodeOnlyNoun:(NSString *)string{
+    
+    NSMutableArray *arrReturn = [NSMutableArray array];
+    NSArray *arrNodes = [self getNode:string];
+    for(int i =0;i < [arrNodes count];i++){
         
-        
-        
-        
-        
-        
-        
-        
-        
-        //予め指定したトークンに応じて単語に分解
-//        NSMutableArray *_arrSentence = [NSMutableArray array];//空配列
-//        
-//        NSArray *strArrTmp = [NSArray array];
-//        //トークンの数だけ分割する
-//        for(int i = 0;i < [arrStrToken count];i++){
-//            strArrTmp = [self stringTokenizerFor:strAllText
-//                                              by:arrStrToken[i]];
-//            //各要素の中に更にトークンが含まれていないか確認
-//            for(int j = 0;j < [strArrTmp count];j++){
-//                NSRange range = [strArrTmp[j] rangeOfString:@"cd"];
-//                if (range.location == NSNotFound) {
-//                    NSLog(@"検索対象が存在しない場合の処理");
-//                }else{
-//                    
-//                }
-//            }
-//        }
+        //        Node *node = arrayNodes[i];
+        //        NSLog(@"%@ : 品詞=%@", node.surface, node.partOfSpeech);
+        if([((Node *)arrNodes[i]).partOfSpeech isEqualToString:@"名詞"])
+            [arrReturn addObject:arrNodes[i]];
     }
     
-    //トークンが文字単体の場合は以下で複数指定できるが、\n等は\とnで分けられてしまう
-//    NSCharacterSet *spr = [NSCharacterSet characterSetWithCharactersInString:@"\n。"];//複数文字列を指定
-//    arrSentence = [strReturnBody componentsSeparatedByCharactersInSet:spr];
-    //以下トークン分割はcomponentsSeparatedByCharactersInSet:で複数指定可能
-    //    arrSentence = [strReturnBody componentsSeparatedByString:@"。"];//句点で分割
+    return arrReturn;
+}
+
+
+-(NSArray *)getUniqueNounFromSentence:(NSString *)strAllSentence{
+    //まずは文節を取得(文章配列でも同じ)
+    NSArray *arrSemiSentence = [self getArrSemiSentence];
     
-    //参考：「」で囲われてる文字列は。で区切らない方が良い。むしろ、鍵カッコを区切り文字として、中の文章は一つのとして扱う
-//    for(int i = 0;i < [arrSentence count];i++){
-//        NSLog(@"sentence%d=%@", i, arrSentence[i]);
+    return [self getUniqueNounFromArray:arrSemiSentence];
+}
+
+//既に文章が配列に格納されている状態ならその配列からユニークな名詞のみ取り出す
+-(NSArray *)getUniqueNounFromArray:(NSArray *)arrSentence{
+    
+    //各文節に対して名詞のみ抽出して重複がないものを格納
+    NSMutableArray *arrNounUnique = [NSMutableArray array];
+    for(int noSen = 0;noSen < [arrSentence count];noSen++){
+        //まずはシンプルに名詞を取り出す
+        NSMutableArray *arrNounDuplicate =
+        [self getNodeOnlyNoun:arrSentence[noSen]];
+        
+        
+        
+        for(int noNounDup = 0;noNounDup < [arrNounDuplicate count];noNounDup++){
+            if([arrNounUnique count] == 0){//格納庫にものが入っていなければそのまま格納
+                [arrNounUnique addObject:arrNounDuplicate[noNounDup]];
+            }else{//既に何かが入っていれば、格納庫の各要素と照合して最後まで一致しなければ格納
+                
+                int noNounUniq = 0;
+                for(;noNounUniq < [arrNounUnique count];noNounUniq++){
+//                    NSLog(@"unique?=%@, duplicate=%@",
+//                          ((Node *)arrNounUnique[noNounUniq]).surface,
+//                          ((Node *)arrNounDuplicate[noNounDup]).surface);
+                    if([((Node *)arrNounUnique[noNounUniq]).surface
+                        isEqualToString:
+                        ((Node *)arrNounDuplicate[noNounDup]).surface]){
+                        break;//for-noNounUniq
+                    }else if(noNounUniq == [arrNounUnique count]-1){//最後まで検索して存在しなければ(ユニークなら)
+                        //過去に格納されていないユニークなもののみ格納
+                        [arrNounUnique addObject:arrNounDuplicate[noNounDup]];
+                    }
+                }
+            }
+        }
+    }
+    
+    
+    //test:pring
+//    for(int i = 0;i < [arrNounUnique count];i++){
+//        NSLog(@"arrUniqueNoun%d = %@", i, ((Node *)arrNounUnique[i]).surface);
 //    }
     
-    //mecabによる形態素解析：別メソッド
-//    NSArray *arrayNodes = [mecab parseToNodeWithString:arrSentence[0]];//テキストをメカブで形態素解析してnodes(UITableCell)に格納
-//    for(int i = 0 ;i < [arrayNodes count];i++){
-//        Node *node = arrayNodes[i];
-//        NSLog(@"%@ : 品詞=%@", node.surface, node.partOfSpeech);
-//    }
-    
-    return arrSentence;
+    return arrNounUnique;//型はNode
 }
 
 @end
