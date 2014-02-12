@@ -97,6 +97,7 @@
     
     //stringを句点(。)で分割して文章に分割
     NSArray *arrSentence = [NSArray array];//空配列
+    //以下トークン分割はcomponentsSeparatedByCharactersInSet:で複数指定可能
     arrSentence = [string componentsSeparatedByString:@"。"];//句点で分割
     for(int i = 0;i < [arrSentence count];i++){
         NSLog(@"sentence%d=%@", i, arrSentence[i]);

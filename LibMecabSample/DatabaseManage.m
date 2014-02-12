@@ -41,7 +41,6 @@
     
 }
 +(NSDictionary *)getValueFromDBAt:(int)idNo{
-    
     @autoreleasepool {
         //カラム配列定義
         NSArray *arrColumn =
@@ -66,8 +65,7 @@
                            column:columnName]];
         }
     
-    
-        //配列を格納した辞書を返す
+        //column名をキー値、文字列を値とする辞書を返す(具体的なキーは上記arrColumn)
         NSDictionary *_dict =
         [NSDictionary dictionaryWithObjects:arrReturned forKeys:arrColumn];
         

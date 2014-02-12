@@ -11,6 +11,12 @@
 //#import "ArticleCell.h"
 #import "BackgroundView.h"
 
-@interface ViewController : UIViewController
+#import "Mecab.h"
+#import "Node.h"
 
+@interface ViewController : UIViewController{
+    Mecab *mecab;
+}
+
+@property (nonatomic) Mecab *mecab;
 @end

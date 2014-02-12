@@ -16,6 +16,8 @@
 
 @implementation ViewController
 
+@synthesize mecab;
+
 BackgroundView *backgroundView;
 CGPoint pntStartDrag;
 int noStatus;//現在の状態(どの区切りか)を判別:最初は一番左の状態
@@ -23,6 +25,12 @@ int noStatus;//現在の状態(どの区切りか)を判別:最初は一番左�
 - (void)viewDidLoad
 {
     [super viewDidLoad];
+    
+    
+    self.mecab = [Mecab new];
+    
+    
+    
 	// Do any additional setup after loading the view, typically from a nib.
     
 //    NSMutableArray *newTutorials = [[NSMutableArray alloc] initWithCapacity:0];
@@ -51,8 +59,39 @@ int noStatus;//現在の状態(どの区切りか)を判別:最初は一番左�
 //    @"saveddate",
     
     //上記キー値を元にデータを取得
-    NSDictionary *strTmp = [DatabaseManage getValueFromDBAt:1];
-    NSLog(@"strTmp = %@", strTmp);
+    NSDictionary *dictTmp = [DatabaseManage getValueFromDBAt:3];
+    NSString *strReturnBody = [dictTmp objectForKey:@"body"];
+    NSLog(@"strTmp = %@", strReturnBody);
+    //stringを句点(。)で分割して文章に分割
+    NSArray *arrSentence = [NSArray array];//空配列
+    NSCharacterSet *spr = [NSCharacterSet characterSetWithCharactersInString:@"\n。"];//複数文字列を指定
+    arrSentence = [strReturnBody componentsSeparatedByCharactersInSet:spr];
+    //以下トークン分割はcomponentsSeparatedByCharactersInSet:で複数指定可能
+//    arrSentence = [strReturnBody componentsSeparatedByString:@"。"];//句点で分割
+    
+    //参考：「」で囲われてる文字列は。で区切らない方が良い。むしろ、鍵カッコを区切り文字として、中の文章は一つのとして扱う
+    for(int i = 0;i < [arrSentence count];i++){
+        NSLog(@"sentence%d=%@", i, arrSentence[i]);
+    }
+    
+    //mecabによる形態素解析
+    NSArray *arrayNodes = [mecab parseToNodeWithString:arrSentence[0]];//テキストをメカブで形態素解析してnodes(UITableCell)に格納
+    for(int i = 0 ;i < [arrayNodes count];i++){
+        Node *node = arrayNodes[i];
+        NSLog(@"%@ : 品詞=%@", node.surface, node.partOfSpeech);
+    }
+    
+    
+    //名詞のみ抽出:
+    //
+    
+    
+//	Node *node = [nodes objectAtIndex:indexPath.row];
+//	cell.surfaceLabel.text = node.surface;
+//	cell.featureLabel.text = [node partOfSpeech];//[node pronunciation];
+    
+    
+    
     
     //表示コンポーネントやデータの初期化等
     NSArray *arrTable = [NSArray arrayWithObjects:
