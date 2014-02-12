@@ -62,6 +62,10 @@ int noStatus;//現在の状態(どの区切りか)を判別:最初は一番左�
     NSDictionary *dictTmp = [DatabaseManage getValueFromDBAt:3];
     NSString *strReturnBody = [dictTmp objectForKey:@"body"];
     NSLog(@"strTmp = %@", strReturnBody);
+    
+    TextAnalysis *textAnalysis = [[TextAnalysis alloc]initWithText:strReturnBody];
+    
+    return;
     //stringを句点(。)で分割して文章に分割
     NSArray *arrSentence = [NSArray array];//空配列
     NSCharacterSet *spr = [NSCharacterSet characterSetWithCharactersInString:@"\n。"];//複数文字列を指定

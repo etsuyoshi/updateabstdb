@@ -8,6 +8,7 @@
 
 #import <UIKit/UIKit.h>
 #import "DatabaseManage.h"
+#import "TextAnalysis.h"
 //#import "ArticleCell.h"
 #import "BackgroundView.h"
 
