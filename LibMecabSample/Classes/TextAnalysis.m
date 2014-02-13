@@ -551,6 +551,8 @@ NSMutableArray *arrImportantNode;//重要語句(Node形式)
     //①タイトルの包含
     
     
+    
+    
 }
 
 //valueがarrayの中に含まれているか(valueがarrayの一つの要素として完全一致するかどうか)
