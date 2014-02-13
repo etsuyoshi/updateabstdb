@@ -10,12 +10,18 @@
 
 @implementation TextAnalysis
 
-NSString *strAllText;
-NSArray *arrSentence;
+NSString *strAllText;//原文
+NSArray *arrSentence;//文章配列
 
-NSMutableArray *arrStrToken;//文章区切り
-NSMutableArray *arrStrSemiToken;//文節区切り
-NSMutableArray *arrStrIgnor;//無視語句
+
+NSArray *arrSemiSentence;//文節配列
+NSArray *arrTerm;//単語(そのまま、重複あり)
+NSArray *arrNounUnique;//名詞(ユニークかつ出現頻度順番)
+NSArray *arrScoreNoun;//名詞の出現回数
+
+NSMutableArray *arrStrToken;//文章区切り文字
+NSMutableArray *arrStrSemiToken;//文節区切り文字
+NSMutableArray *arrStrIgnor;//無視語句(文字)
 
 
 -(id)initWithText:(NSString *)_strAllText{
@@ -42,20 +48,48 @@ NSMutableArray *arrStrIgnor;//無視語句
         //無視語
         arrStrIgnor =
         [NSMutableArray arrayWithObjects:
-         @" ",//半角スペース
+         @" ",//半角スペース:実際にはこれで削除できなかったのでcomponentsSeparatedByCharactersInSet :[NSCharacterSet whitespaceCharacterSet]];
          @"　",//全角スペース
          @"\n",//改行
          nil];
         
-        //通常の文字列分解
+        //通常の文字列分解で文章配列を作成
         arrSentence = [self getArrSentence];
+        
+        //確認
         for(int i = 0;i < [arrSentence count];i++){
             NSLog(@"sentence%d is %@", i, [arrSentence objectAtIndex:i]);
         }
         
+        arrSemiSentence = [self getArrSemiSentenceFrom:arrSentence];
+        
         
         //mecabを使って分解
         NSArray *arrNodes = [self getUniqueNounFromArray:arrSentence];
+        
+        //重複ありの純粋な単語の分割のみ(集計していないので重複あり)
+        arrTerm = [self getArrStrFromArrNode:arrNodes];
+        
+        //重複なしの単語の格納:並べ替えなし
+        arrNounUnique = [self getUniqueNounFromArray:arrSentence];
+        
+        
+        //出現頻度配列
+        arrScoreNoun = [self getEmergeNumAt:arrNounUnique in:arrTerm];
+        
+        
+
+        //重複なしの単語の格納:出現頻度順に並べ替え済 : ex.arrArg５番目が3番目の大きさならarrInd[2(=1の次)]=5)
+        NSMutableArray *arrTmp = [self getArrayInOrder:(NSMutableArray *)arrScoreNoun numOf:[arrNounUnique count]];
+        
+        NSMutableArray *arrNounUniqueInOrder = [NSMutableArray array];//ここで初期化してしまうとだめ
+        for(int i =0;i < [arrTmp count];i++){
+            [arrNounUniqueInOrder
+             addObject:
+             arrNounUnique[[((NSString *)arrTmp[i]) integerValue]]
+             ];
+        }
+        
         for(int i =0;i < [arrNodes count];i++){
             NSLog(@"noun%d is %@", i, ((Node *)arrNodes[i]).surface);
         }
@@ -215,12 +249,13 @@ NSMutableArray *arrStrIgnor;//無視語句
     }//autoreleasepool
 }
 
--(NSArray *)getArrSemiSentence{
+-(NSArray *)getArrSemiSentenceFrom:(NSArray *)arrSentence{
     
     
     @autoreleasepool {
         //文節区切り配列
-        NSArray *arrStrText = [self getArrSentence];
+//        NSArray *arrStrText = [self getArrSentence];
+        NSArray *arrStrText = arrSentence;
         NSMutableArray *arrSemiText = [NSMutableArray array];
         for(int i = 0;i < [arrStrText count];i++){
             //各文章を文節に区切る
@@ -246,6 +281,7 @@ NSMutableArray *arrStrIgnor;//無視語句
     return arrNodes;
 }
 
+
 -(NSMutableArray *)getNodeOnlyNoun:(NSString *)string{
     
     NSMutableArray *arrReturn = [NSMutableArray array];
@@ -261,10 +297,25 @@ NSMutableArray *arrStrIgnor;//無視語句
     return arrReturn;
 }
 
+-(NSArray *)getArrStrFromArrNode:(NSArray *)nodes{
+    NSMutableArray *arrReturn =
+    [NSMutableArray array];
+    
+    //surfaceのみ取得
+    for(int i =0;i < [nodes count];i++){
+        [arrReturn addObject:((Node *)nodes[i]).surface];
+    }
+    return arrReturn;
+}
+
 
 -(NSArray *)getUniqueNounFromSentence:(NSString *)strAllSentence{
     //まずは文節を取得(文章配列でも同じ)
-    NSArray *arrSemiSentence = [self getArrSemiSentence];
+    NSArray *arrSemiSentence =
+    [self getArrSemiSentenceFrom:
+     [NSArray arrayWithObjects:strAllSentence,
+     nil]
+     ];
     
     return [self getUniqueNounFromArray:arrSemiSentence];
 }
@@ -311,6 +362,72 @@ NSMutableArray *arrStrIgnor;//無視語句
 //    }
     
     return arrNounUnique;//型はNode
+}
+
+
+//arrArg配列に対し降順(多い順)にてnum個の要素を返す:ex. arrArg５番目が3番目の大きさならarrInd[2(=1の次)]=5)
+-(NSMutableArray *)getArrayInOrder:(NSMutableArray *)arrArg numOf:(int)num{
+    NSMutableArray *arrInd = [NSMutableArray array];
+    NSMutableArray *arrVal = [NSMutableArray array];
+    for(int i = 0;i < [arrArg count];i++){
+        [arrInd addObject:[NSNumber numberWithInteger:i]];//インデックス配列
+        [arrVal addObject:[NSNumber numberWithInteger:[arrArg[i] integerValue]]];//値配列
+        //        NSLog(@"%dを追加", [arrVal[i] integerValue]);
+    }
+    
+    //bubble sort start
+    for(int i =0;i < [arrVal count];i++){
+        for(int j = 1;j < [arrVal count] - i;j++){//j=1〜
+            if([arrVal[j-1] integerValue] < [arrVal[j] integerValue]){
+                //swap of arrArg
+                id tmp = arrVal[j];
+                arrVal[j] = arrVal[j-1];
+                arrVal[j-1] = tmp;
+                
+                
+                //swap of arrInd
+                tmp = arrInd[j];
+                arrInd[j] = arrInd[j-1];
+                arrInd[j-1] = tmp;
+            }
+        }
+    }
+    //bubble sort complete
+    
+    //確認用
+    //    for(int i = 0;i < [arrVal count];i++){
+    //        NSLog(@"confirm %d : score is %d", [arrInd[i] integerValue], [arrVal[i] integerValue]);
+    //    }
+    
+    NSMutableArray *arrReturn = [NSMutableArray array];
+    for(int i = 0;i < num;i++){
+        [arrReturn addObject:arrInd[i]];
+    }
+    return arrReturn;
+    
+    
+}
+
+
+//arrBigの中にarrUniqueの各要素が何回出現するか
+-(NSArray *)getEmergeNumAt:(NSArray *)arrUnique in:(NSArray *)arrBig{
+    NSMutableArray *arrReturn = [NSMutableArray array];
+    
+    
+    for(int i = 0;i < [arrNounUnique count];i++){
+        [arrReturn addObject:[NSNumber numberWithInteger:0]];
+    }
+    
+    for(int i =0;i < [arrBig count];i++){
+        for(int j =0;j < [arrUnique count];j++){
+            if([arrUnique[j] isEqualToString:arrBig[i]]){
+                arrReturn[j] = [NSNumber numberWithInteger:
+                                [arrReturn[j] integerValue] + 1];
+            }
+        }
+    }
+    
+    return arrReturn;
 }
 
 @end

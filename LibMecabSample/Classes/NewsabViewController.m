@@ -338,7 +338,7 @@
 }
 
 //arrArgの上位num個を返す
-//①並べ替える(同時にインデックス配列arrIndの作成も行う：ex. arrArg５番目が２番目の大きさならarrInd[2]=5)
+//①並べ替える(同時にインデックス配列arrIndの作成も行う：ex. arrArg５番目が２番目の大きさならarrInd[1(=0の次)]=5)
 //②インデックス配列の上位num個を返す
 -(NSMutableArray *)getMax:(NSMutableArray *)arrArg numOf:(int)num{
     NSMutableArray *arrInd = [NSMutableArray array];
