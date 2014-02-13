@@ -67,6 +67,9 @@ NSMutableArray *arrStrIgnor;//無視語句(文字)
         //mecabを使って分解：重複ありの配列にする必要！！
 //        NSArray *arrNodes = [self getUniqueNodeFromArray:arrSentence];
         NSArray *arrNodes = [self getDuplicateNodeFromArrSentence:arrSentence];
+        for(int i =0;i < [arrNodes count];i++){
+            NSLog(@"arrNodes%d is %@", i, ((Node *)arrNodes[i]).surface);
+        }
         
         //重複ありの純粋な単語の分割のみ(集計していないので重複あり)
         arrTerm = [self getArrStrFromArrNode:arrNodes];
@@ -74,6 +77,9 @@ NSMutableArray *arrStrIgnor;//無視語句(文字)
         //重複なしの単語の格納:並べ替えなしなのでtmpとした
         NSArray *arrNounUniqueTmp =
         [self getUniqueNodeFromDuplicate:arrNodes];
+        for(int i =0;i < [arrNounUniqueTmp count];i++){
+            NSLog(@"arrNounUnique%d is %@", i, ((Node *)arrNounUniqueTmp[i]).surface);
+        }
         
         
         //出現頻度配列:Node型とNSString型の両方適用可能：並べ替えなしなのでtmpとした
@@ -94,7 +100,7 @@ NSMutableArray *arrStrIgnor;//無視語句(文字)
             NSLog(@"arrtmp%d is %@", i, arrTmp[i]);
         }
         
-//        NSMutableArray *arrNounUniqueInOrder = [NSMutableArray array];//ここで初期化してしまうとだめ
+        arrNounUnique = [NSMutableArray array];//初期化
         for(int i =0;i < [arrTmp count];i++){
             [arrNounUnique
              addObject:
