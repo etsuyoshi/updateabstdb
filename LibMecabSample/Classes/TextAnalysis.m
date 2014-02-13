@@ -16,8 +16,8 @@ NSArray *arrSentence;//文章配列
 
 NSArray *arrSemiSentence;//文節配列
 NSArray *arrTerm;//単語(そのまま、重複あり)
-NSArray *arrNounUnique;//名詞(ユニークかつ出現頻度順番)
-NSArray *arrScoreNoun;//名詞の出現回数
+NSMutableArray *arrNounUnique;//名詞(ユニークかつ出現頻度順番):Node型？
+NSMutableArray *arrScoreNoun;//名詞の出現回数
 
 NSMutableArray *arrStrToken;//文章区切り文字
 NSMutableArray *arrStrSemiToken;//文節区切り文字
@@ -64,30 +64,53 @@ NSMutableArray *arrStrIgnor;//無視語句(文字)
         arrSemiSentence = [self getArrSemiSentenceFrom:arrSentence];
         
         
-        //mecabを使って分解
-        NSArray *arrNodes = [self getUniqueNounFromArray:arrSentence];
+        //mecabを使って分解：重複ありの配列にする必要！！
+//        NSArray *arrNodes = [self getUniqueNodeFromArray:arrSentence];
+        NSArray *arrNodes = [self getDuplicateNodeFromArrSentence:arrSentence];
         
         //重複ありの純粋な単語の分割のみ(集計していないので重複あり)
         arrTerm = [self getArrStrFromArrNode:arrNodes];
         
-        //重複なしの単語の格納:並べ替えなし
-        arrNounUnique = [self getUniqueNounFromArray:arrSentence];
+        //重複なしの単語の格納:並べ替えなしなのでtmpとした
+        NSArray *arrNounUniqueTmp =
+        [self getUniqueNodeFromDuplicate:arrNodes];
         
         
-        //出現頻度配列
-        arrScoreNoun = [self getEmergeNumAt:arrNounUnique in:arrTerm];
-        
+        //出現頻度配列:Node型とNSString型の両方適用可能：並べ替えなしなのでtmpとした
+        NSArray *arrScoreNounTmp = nil;
+//        NSLog(@"before getEmerge, cout arrterm=%d", [arrTerm count]);//test
+        arrScoreNounTmp = [self getEmergeNumAt:arrNounUniqueTmp
+                                            in:arrTerm];
+        for(int i = 0;i < [arrScoreNounTmp count];i++){
+            NSLog(@"arrScoretmp%d is %@", i, arrScoreNounTmp[i]);
+        }
         
 
         //重複なしの単語の格納:出現頻度順に並べ替え済 : ex.arrArg５番目が3番目の大きさならarrInd[2(=1の次)]=5)
-        NSMutableArray *arrTmp = [self getArrayInOrder:(NSMutableArray *)arrScoreNoun numOf:[arrNounUnique count]];
+        NSMutableArray *arrTmp =
+        [self getArrayInOrder:(NSMutableArray *)arrScoreNounTmp
+                        numOf:[arrScoreNounTmp count]];
+        for(int i = 0;i < [arrTmp count];i++){
+            NSLog(@"arrtmp%d is %@", i, arrTmp[i]);
+        }
         
-        NSMutableArray *arrNounUniqueInOrder = [NSMutableArray array];//ここで初期化してしまうとだめ
+//        NSMutableArray *arrNounUniqueInOrder = [NSMutableArray array];//ここで初期化してしまうとだめ
         for(int i =0;i < [arrTmp count];i++){
-            [arrNounUniqueInOrder
+            [arrNounUnique
              addObject:
-             arrNounUnique[[((NSString *)arrTmp[i]) integerValue]]
+             arrNodes[[((NSString *)arrTmp[i]) integerValue]]
              ];
+            
+            
+            //純粋にスコア順番にすれば良いが、念のため確認
+            [arrScoreNoun
+            addObject:
+            arrScoreNounTmp[[arrTmp[i] integerValue]]
+             ];
+            
+            NSLog(@"arrNou=%@, num=%d",
+                  ((Node *)arrNounUnique[i]).surface,
+                  [arrScoreNoun[i] integerValue]);//出現頻度を出したい
         }
         
         for(int i =0;i < [arrNodes count];i++){
@@ -309,46 +332,64 @@ NSMutableArray *arrStrIgnor;//無視語句(文字)
 }
 
 
--(NSArray *)getUniqueNounFromSentence:(NSString *)strAllSentence{
-    //まずは文節を取得(文章配列でも同じ)
-    NSArray *arrSemiSentence =
-    [self getArrSemiSentenceFrom:
-     [NSArray arrayWithObjects:strAllSentence,
-     nil]
-     ];
-    
-    return [self getUniqueNounFromArray:arrSemiSentence];
-}
+//-(NSArray *)getUniqueNounFromSentence:(NSString *)strAllSentence{
+//    //まずは文節を取得(文章配列でも同じ)
+//    NSArray *arrSemiSentence =
+//    [self getArrSemiSentenceFrom:
+//     [NSArray arrayWithObjects:strAllSentence,
+//     nil]
+//     ];
+//    
+//    return [self getUniqueNodeFromDuplicate:arrSemiSentence];
+//}
 
-//既に文章が配列に格納されている状態ならその配列からユニークな名詞のみ取り出す
--(NSArray *)getUniqueNounFromArray:(NSArray *)arrSentence{
-    
-    //各文節に対して名詞のみ抽出して重複がないものを格納
-    NSMutableArray *arrNounUnique = [NSMutableArray array];
+//文章配列から(重複ありの)名詞配列を取り出す
+-(NSArray *)getDuplicateNodeFromArrSentence:(NSArray *)arrSentence{
+    NSMutableArray *arrReturn = [NSMutableArray array];
     for(int noSen = 0;noSen < [arrSentence count];noSen++){
         //まずはシンプルに名詞を取り出す
         NSMutableArray *arrNounDuplicate =
-        [self getNodeOnlyNoun:arrSentence[noSen]];
+        [self getNodeOnlyNoun:arrSentence[noSen]];//Node型で定義
         
+        //取り出した名詞を一つずつ格納する
+        for(int i =0;i < [arrNounDuplicate count];i++){
+            [arrReturn addObject:arrNounDuplicate[i]];
+        }
         
-        
-        for(int noNounDup = 0;noNounDup < [arrNounDuplicate count];noNounDup++){
-            if([arrNounUnique count] == 0){//格納庫にものが入っていなければそのまま格納
-                [arrNounUnique addObject:arrNounDuplicate[noNounDup]];
+    }
+    
+    return arrReturn;
+}
+
+//既に文章が配列に格納されている状態ならその配列からユニークな名詞のみ取り出す：X
+//重複ありのnodeからユニークノード配列を作成する
+-(NSArray *)getUniqueNodeFromDuplicate:(NSArray *)arrNodeDup{
+    
+    //各文節に対して名詞のみ抽出して重複がないものを格納
+    NSMutableArray *_arrNounUnique = [NSMutableArray array];
+    for(int noSen = 0;noSen < [arrSentence count];noSen++){
+        for(int noNounDup = 0;noNounDup < [arrNodeDup count];noNounDup++){
+            if([_arrNounUnique count] == 0){//格納庫にものが入っていなければそのまま格納
+                [_arrNounUnique addObject:arrNodeDup[noNounDup]];
             }else{//既に何かが入っていれば、格納庫の各要素と照合して最後まで一致しなければ格納
                 
                 int noNounUniq = 0;
-                for(;noNounUniq < [arrNounUnique count];noNounUniq++){
-//                    NSLog(@"unique?=%@, duplicate=%@",
-//                          ((Node *)arrNounUnique[noNounUniq]).surface,
-//                          ((Node *)arrNounDuplicate[noNounDup]).surface);
-                    if([((Node *)arrNounUnique[noNounUniq]).surface
+                for(;noNounUniq < [_arrNounUnique count];noNounUniq++){
+//                    NSLog(@"unique=%@,%d, duplicate=%@,%d",
+//                          ((Node *)_arrNounUnique[noNounUniq]).surface,
+//                          noNounUniq,
+//                          ((Node *)arrNounDuplicate[noNounDup]).surface,
+//                          noNounDup);
+                    if([((Node *)_arrNounUnique[noNounUniq]).surface
                         isEqualToString:
-                        ((Node *)arrNounDuplicate[noNounDup]).surface]){
+                        ((Node *)arrNodeDup[noNounDup]).surface]){
                         break;//for-noNounUniq
-                    }else if(noNounUniq == [arrNounUnique count]-1){//最後まで検索して存在しなければ(ユニークなら)
+                    }else if(noNounUniq == [_arrNounUnique count]-1){//最後まで検索して存在しなければ(ユニークなら)
                         //過去に格納されていないユニークなもののみ格納
-                        [arrNounUnique addObject:arrNounDuplicate[noNounDup]];
+//                        NSLog(@"「%@」は過去に格納されていないユニークな単語なので格納",
+//                              ((Node *)arrNounDuplicate[noNounDup]).surface);
+                        [_arrNounUnique addObject:
+                         ((Node *)arrNodeDup[noNounDup])];
                     }
                 }
             }
@@ -357,11 +398,11 @@ NSMutableArray *arrStrIgnor;//無視語句(文字)
     
     
     //test:pring
-//    for(int i = 0;i < [arrNounUnique count];i++){
-//        NSLog(@"arrUniqueNoun%d = %@", i, ((Node *)arrNounUnique[i]).surface);
-//    }
+    for(int i = 0;i < [_arrNounUnique count];i++){
+        NSLog(@"arrUniqueNoun%d = %@", i, ((Node *)_arrNounUnique[i]).surface);
+    }
     
-    return arrNounUnique;//型はNode
+    return _arrNounUnique;//型はNode
 }
 
 
@@ -414,15 +455,33 @@ NSMutableArray *arrStrIgnor;//無視語句(文字)
     NSMutableArray *arrReturn = [NSMutableArray array];
     
     
-    for(int i = 0;i < [arrNounUnique count];i++){
+    for(int i = 0;i < [arrBig count];i++){
         [arrReturn addObject:[NSNumber numberWithInteger:0]];
     }
     
     for(int i =0;i < [arrBig count];i++){
         for(int j =0;j < [arrUnique count];j++){
-            if([arrUnique[j] isEqualToString:arrBig[i]]){
-                arrReturn[j] = [NSNumber numberWithInteger:
-                                [arrReturn[j] integerValue] + 1];
+//            NSLog(@"uniq = %@, big=%@", arrUnique[j], arrBig[i]);
+            
+            if([arrUnique[j]
+                isKindOfClass:[Node class]]){
+                
+                //引数のarrUnique配列がNodeクラス前提
+                if([((Node *)arrUnique[j]).surface
+                    isEqualToString:arrBig[i]]){
+                    
+                    arrReturn[j] = [NSNumber numberWithInteger:
+                                    [arrReturn[j] integerValue] + 1];
+                }
+            }else if([arrUnique[j]
+                      isKindOfClass:[NSString class]]){
+                
+                //文字列クラスの前提
+                if([arrUnique[j]
+                    isEqualToString:arrBig[i]]){
+                    arrReturn[j] = [NSNumber numberWithInteger:
+                                    [arrReturn[j] integerValue] + 1];
+                }
             }
         }
     }
