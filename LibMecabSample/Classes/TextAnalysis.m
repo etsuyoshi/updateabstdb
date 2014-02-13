@@ -11,25 +11,41 @@
 @implementation TextAnalysis
 
 NSString *strAllText;//原文
+NSString *strTitle;//タイトル
 NSArray *arrSentence;//文章配列
 
 
 NSArray *arrSemiSentence;//文節配列
 NSArray *arrTerm;//単語(そのまま、重複あり)
-NSMutableArray *arrNounUnique;//名詞(ユニークかつ出現頻度順番):Node型？
-NSMutableArray *arrScoreNoun;//名詞の出現回数
 
 NSMutableArray *arrStrToken;//文章区切り文字
 NSMutableArray *arrStrSemiToken;//文節区切り文字
 NSMutableArray *arrStrIgnor;//無視語句(文字)
 
+//最も重要な以下２配列
+NSMutableArray *arrNounUnique;//名詞(ユニークかつ出現頻度順番):Node型
+NSMutableArray *arrScoreNoun;//名詞の出現回数
+NSMutableArray *arrImportantSentenc;//重要文格納配列
+NSMutableArray *arrImportantNode;//重要語句(Node形式)
+
+
 
 -(id)initWithText:(NSString *)_strAllText{
+    
+    self = [self initWithText:_strAllText withTitle:nil];
+    
+    return self;
+}
+-(id)initWithText:(NSString *)_strAllText
+        withTitle:(NSString *)_strTitle{
     
     self = [super init];
     if(self) {
         //原文初期化
         strAllText = _strAllText;
+        
+        //タイトル初期化
+        strTitle = _strTitle;
         
         //トークン初期化
         arrStrToken =
@@ -57,19 +73,18 @@ NSMutableArray *arrStrIgnor;//無視語句(文字)
         arrSentence = [self getArrSentence];
         
         //確認
-        for(int i = 0;i < [arrSentence count];i++){
-            NSLog(@"sentence%d is %@", i, [arrSentence objectAtIndex:i]);
-        }
+//        for(int i = 0;i < [arrSentence count];i++){
+//            NSLog(@"sentence%d is %@", i, [arrSentence objectAtIndex:i]);
+//        }
         
         arrSemiSentence = [self getArrSemiSentenceFrom:arrSentence];
         
         
         //mecabを使って分解：重複ありの配列にする必要！！
-//        NSArray *arrNodes = [self getUniqueNodeFromArray:arrSentence];
         NSArray *arrNodes = [self getDuplicateNodeFromArrSentence:arrSentence];
-        for(int i =0;i < [arrNodes count];i++){
-            NSLog(@"arrNodes%d is %@", i, ((Node *)arrNodes[i]).surface);
-        }
+//        for(int i =0;i < [arrNodes count];i++){
+//            NSLog(@"arrNodes%d is %@", i, ((Node *)arrNodes[i]).surface);
+//        }
         
         //重複ありの純粋な単語の分割のみ(集計していないので重複あり)
         arrTerm = [self getArrStrFromArrNode:arrNodes];
@@ -78,7 +93,8 @@ NSMutableArray *arrStrIgnor;//無視語句(文字)
         NSArray *arrNounUniqueTmp =
         [self getUniqueNodeFromDuplicate:arrNodes];
         for(int i =0;i < [arrNounUniqueTmp count];i++){
-            NSLog(@"arrNounUnique%d is %@", i, ((Node *)arrNounUniqueTmp[i]).surface);
+//            NSLog(@"arrNounUnique%d is %@",
+//                  i, ((Node *)arrNounUniqueTmp[i]).surface);
         }
         
         
@@ -87,40 +103,62 @@ NSMutableArray *arrStrIgnor;//無視語句(文字)
 //        NSLog(@"before getEmerge, cout arrterm=%d", [arrTerm count]);//test
         arrScoreNounTmp = [self getEmergeNumAt:arrNounUniqueTmp
                                             in:arrTerm];
-        for(int i = 0;i < [arrScoreNounTmp count];i++){
-            NSLog(@"arrScoretmp%d is %@", i, arrScoreNounTmp[i]);
-        }
+//        for(int i = 0;i < [arrScoreNounTmp count];i++){
+//            NSLog(@"arrScoretmp%d is %@", i, arrScoreNounTmp[i]);
+//        }
+        
+//        NSLog(@"arrNou")
         
 
-        //重複なしの単語の格納:出現頻度順に並べ替え済 : ex.arrArg５番目が3番目の大きさならarrInd[2(=1の次)]=5)
+        //重複なしの単語の格納:出現頻度順に並べ替え済
+        //ex.arrArg５番目が3番目の大きさならarrInd[2(=1の次)]=5)
         NSMutableArray *arrTmp =
         [self getArrayInOrder:(NSMutableArray *)arrScoreNounTmp
                         numOf:[arrScoreNounTmp count]];
-        for(int i = 0;i < [arrTmp count];i++){
-            NSLog(@"arrtmp%d is %@", i, arrTmp[i]);
-        }
+//        for(int i = 0;i < [arrTmp count];i++){
+//            NSLog(@"arrtmp%d is %@", i, arrTmp[i]);
+//        }
         
-        arrNounUnique = [NSMutableArray array];//初期化
-        for(int i =0;i < [arrTmp count];i++){
+//        NSLog(@"arrtmp count=%d, arrscoreNounTmp=%d",
+//              [arrTmp count], [arrScoreNounTmp count]);
+        
+        //初期化：降順(多い順)に格納する配列
+        arrScoreNoun = [NSMutableArray array];//スコア配列
+        arrNounUnique = [NSMutableArray array];//格納するユニーク名詞配列
+        for(int i =0;i < MIN([arrNounUnique count], [arrTmp count]);i++){
+            //ユニークかつ降順に名詞のみをNode型として配列作成
             [arrNounUnique
              addObject:
-             arrNodes[[((NSString *)arrTmp[i]) integerValue]]
+             arrNounUniqueTmp[[arrTmp[i] integerValue]]
              ];
             
-            
-            //純粋にスコア順番にすれば良いが、念のため確認
+            //スコア配列が降順(大きい順番)になっているか確認するため
             [arrScoreNoun
             addObject:
             arrScoreNounTmp[[arrTmp[i] integerValue]]
              ];
             
-            NSLog(@"arrNou=%@, num=%d",
-                  ((Node *)arrNounUnique[i]).surface,
-                  [arrScoreNoun[i] integerValue]);//出現頻度を出したい
+            //単語と出現頻度
+//            NSLog(@"arrNou=%@, num=%d",
+//                  ((Node *)arrNounUnique[i]).surface,
+//                  [((NSString *)arrScoreNoun[i]) integerValue]);
         }
+//        NSLog(@"重複チェック");
         
-        for(int i =0;i < [arrNodes count];i++){
-            NSLog(@"noun%d is %@", i, ((Node *)arrNodes[i]).surface);
+        //重複チェック
+        for(int i =0;i < [arrNounUnique count]-1;i++){
+            for(int j =i+1;j < [arrNounUnique count];j++){
+                if([((Node *)arrNounUnique[i]).surface
+                   isEqualToString:
+                   ((Node *)arrNounUnique[j]).surface]){
+                    
+                    NSLog(@"break! at %d %d, %@", i, j, ((Node *)arrNounUnique[i]).surface);
+                    break;
+                }
+            }
+            if(i == [arrNounUnique count]){
+                NSLog(@"unique check complete");
+            }
         }
         
     }
@@ -404,9 +442,9 @@ NSMutableArray *arrStrIgnor;//無視語句(文字)
     
     
     //test:pring
-    for(int i = 0;i < [_arrNounUnique count];i++){
-        NSLog(@"arrUniqueNoun%d = %@", i, ((Node *)_arrNounUnique[i]).surface);
-    }
+//    for(int i = 0;i < [_arrNounUnique count];i++){
+//        NSLog(@"arrUniqueNoun%d = %@", i, ((Node *)_arrNounUnique[i]).surface);
+//    }
     
     return _arrNounUnique;//型はNode
 }
@@ -494,5 +532,36 @@ NSMutableArray *arrStrIgnor;//無視語句(文字)
     
     return arrReturn;
 }
+
+
+
+//重要文arrImportantSentenceと重要語句の抽出arrImportantNode
+//重要文抽出方法
+//    ①タイトルに含まれている単語を含む文章は本文の要約をしている可能性が高い
+//    ②上の方にある文章ほどその重要度が高い
+//    ③文章全体のキーワードをカウントした時、特に上位に来るワードの重要さが大きい
+//    ④tfidfが大きい文書
+//使用する材料
+//arrSentence:全文配列
+//arrNounUnique:ユニーク名詞配列(in descent order:多い順)
+//arrScoreNoun:arrNounUnique配列に対応する単語の出現頻度配列(in descent order)
+//strTitle:タイトル文字列
+-(void)setImportantSentence{
+    
+    //①タイトルの包含
+    
+    
+}
+
+//valueがarrayの中に含まれているか(valueがarrayの一つの要素として完全一致するかどうか)
+-(BOOL)isInArrayAt:(NSMutableArray *)array value:(id)value{
+    for(int i = 0 ;i < [array count];i++){
+        if([array[i] isEqual:value]){
+            return YES;
+        }
+    }
+    return NO;
+}
+
 
 @end
