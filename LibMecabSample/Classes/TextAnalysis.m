@@ -8,6 +8,10 @@
 
 #import "TextAnalysis.h"
 
+//②上の方にある文章ほどその重要度が高い
+//上位何パーセントを重要と判断するか
+#define PERCENTAGE_UPPERSIDE_IMPORTANT_TERM 20
+
 @implementation TextAnalysis
 
 NSString *strAllText;//原文
@@ -548,7 +552,52 @@ NSMutableArray *arrImportantNode;//重要語句(Node形式)
 //strTitle:タイトル文字列
 -(void)setImportantSentence{
     
+    //加算点数
+    //文章に対して加算するスコア
+    int scoreAddingToSentence = 1;
+    //Nodeに対して加算されるスコア
+    int scoreAddingToNode = 1;
+    
+    NSMutableArray *_arrScoreSentence = [NSMutableArray array];
+    NSMutableArray *_arrScoreNode = [NSMutableArray array];
+    for(int i = 0;i < [arrSentence count];i++){
+        [_arrScoreSentence addObject:[NSNumber numberWithInteger:0]];
+    }
+    for(int i =0;i < [arrNounUnique count];i++){
+        [_arrScoreNode addObject:[NSNumber numberWithInteger:0]];
+    }
+    
     //①タイトルの包含
+    for(int j = 0;j < [arrNounUnique count];j++){
+        Node *node = (Node *)arrNounUnique[j];
+        NSRange range = [strTitle rangeOfString:node.surface];//Node検索
+        if(range.location != NSNotFound) {//Nodeが含まれていれば
+            _arrScoreNode[j] =
+            [NSNumber numberWithInteger:
+             [_arrScoreNode[j] integerValue] + scoreAddingToNode];
+        }
+    }
+    
+    
+    //②上の方にある文章ほどその重要度が高い
+    //単語配列と文章配列への加点
+    for(int j = 0;j < [arrNounUnique count] * PERCENTAGE_UPPERSIDE_IMPORTANT_TERM/100;j++){
+        Node *node = (Node *)arrNounUnique[j];
+        for(int i = 0;i < [arrSentence count];i++){
+            NSRange range = [arrSentence[i] rangeOfString:node.surface];//Node検索
+            if(range.location != NSNotFound) {//Nodeが含まれていれば
+                //単語への加点
+                _arrScoreNode[j] =
+                [NSNumber numberWithInteger:
+                 [_arrScoreNode[j] integerValue] + scoreAddingToNode];
+                //文章への加点
+                _arrScoreSentence[i] =
+                [NSNumber numberWithInteger:
+                 [_arrScoreSentence[i] integerValue] + scoreAddingToSentence];
+            }
+        }
+    }
+    
     
     
     
