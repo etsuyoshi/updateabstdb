@@ -12,7 +12,12 @@
 #import "Mecab.h"
 
 @interface TextAnalysis : NSObject
+//@property (nonatomic, copy) NSMutableArray *arrImportantSentence;//重要文格納配列
+//@property (nonatomic, copy) NSMutableArray *arrImportantNode;//重要語句(Node形式)
 
 -(id)initWithText:(NSString *)str;
+
+-(NSArray *)getImportantSentence;
+-(NSArray *)getImportantNode;
 
 @end

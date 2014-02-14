@@ -8,9 +8,11 @@
 
 #import "TextAnalysis.h"
 
-//②上の方にある文章ほどその重要度が高い
-//上位何パーセントを重要と判断するか
-#define PERCENTAGE_UPPERSIDE_IMPORTANT_TERM 20
+//重要語句及び重要文章の判定のためのパラメータ
+#define PERCENTAGE_UPPERSIDE_IMPORTANT_SENTENCE 20//重要であると定義すべき文章の上位パーセンテージ位置
+#define PERCENTAGE_UPPERCOUNTER_IMPORTANT_TERM 20//重要であると定義すべき単語の上位パーセンテージカウンター
+//以下は使ってない
+#define PERCENTAGE_UPPERSIDE_IMPORTANT_TERM 20//重要であると定義すべき単語の上位パーセンテージ位置：上位何パーセントを重要と判断するか
 
 @implementation TextAnalysis
 
@@ -25,13 +27,17 @@ NSArray *arrTerm;//単語(そのまま、重複あり)
 NSMutableArray *arrStrToken;//文章区切り文字
 NSMutableArray *arrStrSemiToken;//文節区切り文字
 NSMutableArray *arrStrIgnor;//無視語句(文字)
+NSMutableArray *arrNumber;
 
 //最も重要な以下２配列
 NSMutableArray *arrNounUnique;//名詞(ユニークかつ出現頻度順番):Node型
 NSMutableArray *arrScoreNoun;//名詞の出現回数
-NSMutableArray *arrImportantSentenc;//重要文格納配列
+NSMutableArray *arrImportantSentence;//重要文格納配列
 NSMutableArray *arrImportantNode;//重要語句(Node形式)
 
+//selfフィールドにしても(selfが初期化されていないので)init内で初期化できずtextAnalysis.arrImportantNode等のような形で呼べない
+//@synthesize arrImportantSentence;
+//@synthesize arrImportantNode;
 
 
 -(id)initWithText:(NSString *)_strAllText{
@@ -40,10 +46,17 @@ NSMutableArray *arrImportantNode;//重要語句(Node形式)
     
     return self;
 }
+
+
 -(id)initWithText:(NSString *)_strAllText
         withTitle:(NSString *)_strTitle{
     
     self = [super init];
+    
+//    self.arrImportantNode = [NSMutableArray array];//重要語句格納配列の初期化
+//    self.arrImportantSentence = [NSMutableArray array];//重要文章格納配列の初期化
+
+    
     if(self) {
         //原文初期化
         strAllText = _strAllText;
@@ -73,6 +86,11 @@ NSMutableArray *arrImportantNode;//重要語句(Node形式)
          @"\n",//改行
          nil];
         
+        arrNumber =
+        [NSMutableArray arrayWithObjects:
+         @"１",@"２",@"３",@"４",@"５",@"６",@"７",@"８",@"９",@"０",
+         @"1",@"2",@"3",@"4",@"5",@"6",@"7",@"8",@"9",@"0",nil];
+        
         //通常の文字列分解で文章配列を作成
         arrSentence = [self getArrSentence];
         
@@ -89,6 +107,9 @@ NSMutableArray *arrImportantNode;//重要語句(Node形式)
 //        for(int i =0;i < [arrNodes count];i++){
 //            NSLog(@"arrNodes%d is %@", i, ((Node *)arrNodes[i]).surface);
 //        }
+        
+        
+        
         
         //重複ありの純粋な単語の分割のみ(集計していないので重複あり)
         arrTerm = [self getArrStrFromArrNode:arrNodes];
@@ -129,7 +150,7 @@ NSMutableArray *arrImportantNode;//重要語句(Node形式)
         //初期化：降順(多い順)に格納する配列
         arrScoreNoun = [NSMutableArray array];//スコア配列
         arrNounUnique = [NSMutableArray array];//格納するユニーク名詞配列
-        for(int i =0;i < MIN([arrNounUnique count], [arrTmp count]);i++){
+        for(int i =0;i < MIN([arrNounUniqueTmp count], [arrTmp count]);i++){
             //ユニークかつ降順に名詞のみをNode型として配列作成
             [arrNounUnique
              addObject:
@@ -160,15 +181,37 @@ NSMutableArray *arrImportantNode;//重要語句(Node形式)
                     break;
                 }
             }
-            if(i == [arrNounUnique count]){
+            //最後のループになったら
+            if(i == [arrNounUnique count]-2){
                 NSLog(@"unique check complete");
+                
+                
             }
         }
         
+        
+        
+        
     }
     
+    
+    
+    [self setImportantSentence];//arrImportantSentence,Nodeに格納
+    
+    NSLog(@"complete initialization");
     return self;
 }
+
+-(NSArray *)getImportantSentence{
+    
+    return arrImportantSentence;
+}
+
+-(NSArray *)getImportantNode{
+    
+    return arrImportantNode;
+}
+
 
 - (NSMutableArray *)getEachLine:(NSString*)string
 {
@@ -357,13 +400,96 @@ NSMutableArray *arrImportantNode;//重要語句(Node形式)
     
     NSMutableArray *arrReturn = [NSMutableArray array];
     NSArray *arrNodes = [self getNode:string];
+    Node *node;
+    NSString *strForAppend = @"";//連結用文字列
     for(int i =0;i < [arrNodes count];i++){
+        node = arrNodes[i];
         
+        if([node.partOfSpeech isEqualToString:@"名詞"]){
+            
+            
+            //数字である場合
+            if([self isInArrayAt:arrNumber value:node.surface]){//数字であるかどうか確認する
+                for(int j = 0;j < [arrNumber count];j++){//数字配列の全てを検索する
+                    if([node.surface isEqualToString:arrNumber[j]]){//数字を特定する
+                        strForAppend = node.surface;//これから接続する数字を格納する
+                        //前が数字である可能性はない(数字であれば既にこのループにひっかかっているため)
+                        //後ろのみを探索:次「以降」のnodeを検索して数字がないか確認
+                        int k = i + 1;
+                        for(;k < [arrNodes count];k++){//次のindex:iを検索していく
+                            Node *nodeTmp = arrNodes[k];
+                            if([self isInArrayAt:arrNumber value:nodeTmp.surface]){//まずは検索
+                                for(int L = 0;L < [arrNumber count];L++){//全ての数字との一致検索
+                                    if([nodeTmp.surface isEqualToString:arrNumber[L]]){
+                                        strForAppend = [NSString stringWithFormat:@"%@%@",
+                                                     strForAppend,arrNumber[L]];
+                                        break;//for-L
+                                    }
+                                }//for-L
+                            }else{//後ろの文字が数字ではない場合
+                                
+                                //後ろの文字(index:k)のが接尾語である場合、(数字の後に)単位が続いている可能性があるので接続する
+                                //ex.2001年、２月、５日等
+                                NSArray *arrFeatures = nodeTmp.features;//例：名詞,固有名詞,人名,姓,*,*,伊藤,イトウ,イトー
+                                if([arrFeatures[1] isEqualToString:@"接尾"]){
+                                    //数字と接尾語を連結
+                                    strForAppend = [NSString stringWithFormat:@"%@%@",
+                                                 strForAppend, nodeTmp.surface];
+                                    k++;//次のノードを先取りしたので、次はi = k+1番目から調べていく
+                                    
+                                }
+                                
+                                
+                                //(数字の後ろが接尾語である場合に接続したら)終了
+                                break;//for-k
+                            }
+                        }//for-k
+                        
+                        if(k > i + 1){//「上記for-kループが一回以上実行された」＝「arrNodes配列に数字が含まれていた」
+                            //続きは(数字ではない)k番目のnodeから実行させる
+                            i=k-1;//重要！
+                            
+                            //一回ループが回った＝連続した数字は連結済(※離れた場所に数字がある可能性は残されたまま)
+                            break;//for-j:数字チェックループの終了
+                        }
+                        
+                    }//if:node==arrayNumber
+                }//for-j
+            }//if:number
+            else if([[node.features objectAtIndex:1]
+                     isEqualToString:@"固有名詞"]){//品詞分類１が固有名詞等の場合
+                
+                //次も固有名詞であれば連結された固有名詞である可能性が高い
+                int k = i + 1;
+                Node *nodeTmp = nil;
+                for(;k < [arrNodes count];k++){
+                    nodeTmp = arrNodes[k];
+                    if([[nodeTmp.features objectAtIndex:1] isEqualToString:@"固有名詞"]){
+                        NSLog(@"%@に%@を連結", node.surface, nodeTmp.surface);
+                        strForAppend = [NSString stringWithFormat:@"%@%@",
+                                        strForAppend,nodeTmp.surface];
+                    }else{
+                        break;
+                    }
+                }
+                
+            }
         //        Node *node = arrayNodes[i];
         //        NSLog(@"%@ : 品詞=%@", node.surface, node.partOfSpeech);
-        if([((Node *)arrNodes[i]).partOfSpeech isEqualToString:@"名詞"])
-            [arrReturn addObject:arrNodes[i]];
-    }
+        
+            if([strForAppend isEqualToString:@""]){
+                [arrReturn addObject:arrNodes[i]];
+            }else{
+                NSLog(@"arrReturnに%@を追加", strForAppend);
+                Node *oldNode = arrNodes[i];
+                Node *newNode = [Node new];
+                newNode.surface = strForAppend;
+                newNode.feature = oldNode.feature;//格納の仕方がよくわからないので連結された中の最後のnodeのfeatureを格納
+                [arrReturn addObject:newNode];
+                strForAppend = @"";//初期化
+            }
+        }//if-名詞
+    }//for-i
     
     return arrReturn;
 }
@@ -552,6 +678,7 @@ NSMutableArray *arrImportantNode;//重要語句(Node形式)
 //strTitle:タイトル文字列
 -(void)setImportantSentence{
     
+    NSLog(@"start setimportantsentence");
     //加算点数
     //文章に対して加算するスコア
     int scoreAddingToSentence = 1;
@@ -568,20 +695,52 @@ NSMutableArray *arrImportantNode;//重要語句(Node形式)
     }
     
     //①タイトルの包含
+    //タイトルに含まれる語句に加点
+    //「タイトルに含まれる語句」を含む文章に加点
     for(int j = 0;j < [arrNounUnique count];j++){
         Node *node = (Node *)arrNounUnique[j];
-        NSRange range = [strTitle rangeOfString:node.surface];//Node検索
-        if(range.location != NSNotFound) {//Nodeが含まれていれば
+        NSRange rangeTitle = [strTitle rangeOfString:node.surface];//Node検索
+        if(rangeTitle.location != NSNotFound) {//Nodeが含まれていれば
+            //単語に加点
             _arrScoreNode[j] =
             [NSNumber numberWithInteger:
              [_arrScoreNode[j] integerValue] + scoreAddingToNode];
+            
+            for(int i =0;i < [arrSentence count];i++){//全ての文章に対して
+                NSRange rangeSentence = [arrSentence[i] rangeOfString:node.surface];//Node検索
+                if(rangeSentence.location != NSNotFound) {//Nodeが含まれていれば
+                    //文章への加点
+                    _arrScoreSentence[i] =
+                    [NSNumber numberWithInteger:
+                     [_arrScoreSentence[i] integerValue] + scoreAddingToSentence];
+                }
+            }
         }
     }
     
     
     //②上の方にある文章ほどその重要度が高い
     //単語配列と文章配列への加点
-    for(int j = 0;j < [arrNounUnique count] * PERCENTAGE_UPPERSIDE_IMPORTANT_TERM/100;j++){
+    for(int j = 0;j < [arrNounUnique count];j++){
+        Node *node = (Node *)arrNounUnique[j];
+        for(int i = 0;i < [arrSentence count] * PERCENTAGE_UPPERSIDE_IMPORTANT_SENTENCE/100;i++){
+            NSRange range = [arrSentence[i] rangeOfString:node.surface];//Node検索
+            if(range.location != NSNotFound) {//Nodeが含まれていれば
+                //単語への加点
+                _arrScoreNode[j] =
+                [NSNumber numberWithInteger:
+                 [_arrScoreNode[j] integerValue] + scoreAddingToNode];
+                //文章への加点
+                _arrScoreSentence[i] =
+                [NSNumber numberWithInteger:
+                 [_arrScoreSentence[i] integerValue] + scoreAddingToSentence];
+            }
+        }
+    }
+    
+    
+    //③文章全体のキーワードをカウントした時、特に（カウンター)上位に来るワードの重要さが大きい
+    for (int j = 0; j < [arrNounUnique count] * PERCENTAGE_UPPERCOUNTER_IMPORTANT_TERM/100; j++){
         Node *node = (Node *)arrNounUnique[j];
         for(int i = 0;i < [arrSentence count];i++){
             NSRange range = [arrSentence[i] rangeOfString:node.surface];//Node検索
@@ -599,8 +758,40 @@ NSMutableArray *arrImportantNode;//重要語句(Node形式)
     }
     
     
+    //④tfidfの設定
     
     
+    
+    NSLog(@"重要文章の表示:3点以上");
+    for(int i = 0;i < [arrSentence count];i++){
+        if([_arrScoreSentence[i] integerValue] > 2){
+            NSLog(@"score=%d:index%d:%@",
+                  [_arrScoreSentence[i] integerValue],
+                  i,
+                  arrSentence[i]);
+            
+            //重要文章の格納:順番通りになっていないが、必ずしも上位語句では順位自体が重要とは限らない
+            [arrImportantSentence
+             addObject:arrSentence[i]];
+        }
+    }
+    
+    
+    NSLog(@"重要語句の表示:5点以上");
+    for(int j = 0;j < [arrNounUnique count];j++){
+        if([_arrScoreNode[j] integerValue] > 4){
+            NSLog(@"score=%d:index:%d:%@",
+                  [_arrScoreNode[j] integerValue],
+                  j,
+                  ((Node *)arrNounUnique[j]).surface);
+            
+            //重要語句の格納:順番通りになっていない
+            [arrImportantNode
+             addObject:arrNounUnique[j]];
+        }
+    }
+    
+    NSLog(@"complete setting important sentence & node");
     
 }
 

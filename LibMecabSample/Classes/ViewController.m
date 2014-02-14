@@ -64,8 +64,19 @@ int noStatus;//現在の状態(どの区切りか)を判別:最初は一番左�
     NSLog(@"strTmp = %@", strReturnBody);
     
     TextAnalysis *textAnalysis = [[TextAnalysis alloc]initWithText:strReturnBody];
+    NSArray *arrImportantSentence = textAnalysis.getImportantSentence;
+    NSArray *arrImportantNode = textAnalysis.getImportantNode;
     
-    return;
+    
+    
+    for(int i =0;i < [arrImportantNode count];i++){
+        NSLog(@"arrNode%d＝%@", i, arrImportantNode[i]);
+    }
+    
+    for(int i =0;i < [arrImportantSentence count];i++){
+        NSLog(@"arrSentence%d=%@",i, arrImportantSentence[i]);
+    }
+    
     //stringを句点(。)で分割して文章に分割
     NSArray *arrSentence = [NSArray array];//空配列
     NSCharacterSet *spr = [NSCharacterSet characterSetWithCharactersInString:@"\n。"];//複数文字列を指定
