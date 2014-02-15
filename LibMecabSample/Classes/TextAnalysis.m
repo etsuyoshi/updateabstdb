@@ -876,7 +876,7 @@ NSMutableArray *arrImportantNode;//重要語句(Node形式)
         }//for-j
         
         //_arrTF:文章jに存在する単語iの個数を格納した配列
-        [_arrTF addObject:_arrTmp];//正確にはまだtf値を計算していない
+        [_arrTF addObject:_arrTmp];//正確にはまだtf値を計算していない:下の複数ブロックで分母計算＆規格化
     }//for-i
     
     //nkj：nijの分母の計算
@@ -894,15 +894,35 @@ NSMutableArray *arrImportantNode;//重要語句(Node形式)
         [_arrDenominatorOfTf addObject:[NSNumber numberWithInt:_score]];
     }
     
-    //上記nkjで規格化する
-    for(int )
+    //上記nkjで規格化(_arrDenominatorOfTfで除算)して
+    for(int j = 0;j < [arrSentence count];j++){
+        double _denominator = [_arrDenominatorOfTf[j] doubleValue];
+        for(int i = 0;i < [arrNounUnique count];i++){
+            _arrTF[i][j] =
+            [NSNumber numberWithDouble:
+             ([_arrTF[i][j] doubleValue]/_denominator)
+             ];
+        }
+    }
     
-    for(int noSen = 0;noSen < [arrSentence count];noSen++){
+    //tfidf値の計算
+    for(int noSen = 0;noSen < [arrSentence count];noSen++){//全文章に対して
+        double _tfidf = 0;
+        for(int noTerm = 0;noTerm < [arrNounUnique count];noTerm++){//全単語に対して
+            _tfidf =
+            [_arrTF[noTerm][noSen] doubleValue] * [_arrIDF[noTerm] doubleValue];
+        }
+        
+        //tfidf値を格納
+        [_arrTFIDF addObject:[NSNumber numberWithDouble:_tfidf]];
+        
         
     }
     
-    return 0;
+    return _arrTFIDF;
 }
+
+
 
 
 @end
