@@ -14,7 +14,14 @@
 
 
 -(id)initWithFrame:(CGRect)frame{
+    
+    return [self initWithFrame:frame
+                      withText:(NSString *)_text];
+}
+-(id)initWithFrame:(CGRect)frame withText:(NSString *)_textArg{
     self = [super initWithFrame:frame];
+    
+    self.text = _textArg;
     
     
     if(self){
@@ -39,7 +46,16 @@
         self.translucentTintColor = [UIColor yellowColor];
         self.backgroundColor = [UIColor clearColor];
         
+        UILabel *uil = [[UILabel alloc] init];
+        uil.frame = self.bounds;
+        uil.backgroundColor = [UIColor clearColor];
+        uil.textColor = [UIColor blueColor];
+        uil.font = [UIFont fontWithName:@"AppleGothic" size:12];
+        uil.textAlignment = NSTextAlignmentCenter;
+        uil.text = self.text;
         
+        
+        [self addSubview:uil];
     }
 }
 

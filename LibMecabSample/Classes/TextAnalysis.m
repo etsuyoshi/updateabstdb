@@ -29,6 +29,8 @@ NSMutableArray *arrStrSemiToken;//文節区切り文字
 NSMutableArray *arrStrIgnor;//無視語句(文字)
 NSMutableArray *arrNumber;
 
+NSMutableArray *arrTFIDF;
+
 //最も重要な以下２配列
 NSMutableArray *arrNounUnique;//名詞(ユニークかつ出現頻度順番):Node型
 NSMutableArray *arrScoreNoun;//名詞の出現回数
@@ -95,9 +97,9 @@ NSMutableArray *arrImportantNode;//重要語句(Node形式)
         arrSentence = [self getArrSentence];
         
         //確認
-//        for(int i = 0;i < [arrSentence count];i++){
-//            NSLog(@"sentence%d is %@", i, [arrSentence objectAtIndex:i]);
-//        }
+        for(int i = 0;i < [arrSentence count];i++){
+            NSLog(@"sentence%d is %@", i, [arrSentence objectAtIndex:i]);
+        }
         
         arrSemiSentence = [self getArrSemiSentenceFrom:arrSentence];
         
@@ -194,6 +196,7 @@ NSMutableArray *arrImportantNode;//重要語句(Node形式)
         
     }
     
+    arrTFIDF = [self getTfIdf];
     
     
     [self setImportantSentence];//arrImportantSentence,Nodeに格納
@@ -465,7 +468,7 @@ NSMutableArray *arrImportantNode;//重要語句(Node形式)
                 for(;k < [arrNodes count];k++){
                     nodeTmp = arrNodes[k];
                     if([[nodeTmp.features objectAtIndex:1] isEqualToString:@"固有名詞"]){
-                        NSLog(@"%@に%@を連結", node.surface, nodeTmp.surface);
+//                        NSLog(@"%@に%@を連結", node.surface, nodeTmp.surface);
                         strForAppend = [NSString stringWithFormat:@"%@%@",
                                         strForAppend,nodeTmp.surface];
                     }else{
@@ -803,6 +806,102 @@ NSMutableArray *arrImportantNode;//重要語句(Node形式)
         }
     }
     return NO;
+}
+
+
+-(NSMutableArray *)getTfIdf{
+    
+    /*
+     tf[i,j]=nij/sigm[nkj]k;短い文書の中に表れる単語の重要度を上げる
+     *nij=単語iの文書jにおける出現頻度
+     *idf[i]=log(|D|/|{d:d<ti}|=総ドキュメント数/単語iが含まれる文章数
+     *重複した単語を調べても意味がないので単語はarrNounUniqueを使用
+     */
+    int D = [arrSentence count];//idf分子
+    NSMutableArray *_arrTFIDF = [NSMutableArray array];//tfidf:num=[arrSentence count]
+    NSMutableArray *_arrTF = [NSMutableArray array];//tf:num=[arrNounUnique count]x[arrSentence count]
+    
+    NSMutableArray *_arrIDF = [NSMutableArray array];//idf:num=[arrNounUnique count]
+    
+    NSMutableArray *_arrN_ij = [NSMutableArray array];//tf値の分母:num=[arrSentence count]
+    
+    NSString *_term;//検索したい単語
+    for(int i = 0;i < [arrNounUnique count];i++){//全ての単語に対して
+        int _d_i = 0;//単語iのidf値の分母
+        _term = ((Node *)arrNounUnique[i]).surface;
+        
+        //idf[j]配列の計算
+        for(int noSen = 0;noSen < [arrSentence count];noSen++){//全ての文章に対して
+            if([(NSString *)arrSentence[noSen] rangeOfString:_term].location
+               != NSNotFound){//単語iが文章noSenに含まれていれば
+                _d_i++;
+                
+                //test
+                NSLog(@"単語%d「%@」は文章%d:「%@」に含まれる＝＞score=%d",
+                      i,_term,noSen,arrSentence[noSen],_d_i);
+            }
+        }
+        _arrIDF[i] = [NSNumber numberWithDouble:log(D/_d_i)];
+        //[_arr_di addObject:[NSNumber numberWithFloat:log(D/_score)]];
+        
+        //完了
+        NSLog(@"単語%d「%@」のidf値は%f",
+              i,_term,[_arrIDF[i] floatValue]);
+        
+        //単語iのための文章の数の要素数を持つ配列：nijの計算用
+        NSMutableArray *_arrTmp = [NSMutableArray array];
+        //tf[i,j]の計算:単語iが文章jに含まれる個数
+        for(int j = 0;j < [arrSentence count];j++){
+            
+            //http://stackoverflow.com/questions/2166809/number-of-occurrences-of-a-substring-in-an-nsstring
+            NSUInteger count = 0, length = [arrSentence[j] length];
+            NSRange range = NSMakeRange(0, length);
+            
+            while(range.location != NSNotFound){
+                range =
+                [arrSentence[j] rangeOfString: _term
+                                      options:0
+                                        range:range];
+                if(range.location != NSNotFound){
+                    //次のループに向けてrangeを修正
+                    range =
+                    NSMakeRange(range.location + range.length,
+                                length - (range.location + range.length));
+                    count++;//カウンター
+                }
+            }
+            
+            [_arrTmp addObject:[NSNumber numberWithInt:count]];
+            
+        }//for-j
+        
+        //_arrTF:文章jに存在する単語iの個数を格納した配列
+        [_arrTF addObject:_arrTmp];//正確にはまだtf値を計算していない
+    }//for-i
+    
+    //nkj：nijの分母の計算
+    //文章の個数だけある配列の定義
+    NSMutableArray *_arrDenominatorOfTf = [NSMutableArray array];
+    //_arrTF配列を横方向(arrSentenceと同じ)、縦方向に見ていく
+    for(int j =0;j < [arrSentence count];j++){//_arrTfを横方向に見ていく
+        //その文章の中に全ての単語が幾つ含まれるか(規格化するための分母)
+        int _score = 0;
+        for(int i = 0;i < [_arrTF count];i++){//_arrTFを縦方向に見ていく
+            _score += [[_arrTF[i] objectAtIndex:j] integerValue];
+        }
+        
+        //各文章に格納する
+        [_arrDenominatorOfTf addObject:[NSNumber numberWithInt:_score]];
+    }
+    
+    //上記nkjで規格化する
+    for(int )
+    
+    for(int noSen = 0;noSen < [arrSentence count];noSen++){
+        
+    }
+    
+    return 0;
 }
 
 

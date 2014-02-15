@@ -68,33 +68,34 @@ int noStatus;//現在の状態(どの区切りか)を判別:最初は一番左�
     NSArray *arrImportantNode = textAnalysis.getImportantNode;
     
     
+    //test
+//    for(int i =0;i < [arrImportantNode count];i++){
+//        NSLog(@"arrNode%d＝%@", i, arrImportantNode[i]);
+//    }
+//    for(int i =0;i < [arrImportantSentence count];i++){
+//        NSLog(@"arrSentence%d=%@",i, arrImportantSentence[i]);
+//    }
     
-    for(int i =0;i < [arrImportantNode count];i++){
-        NSLog(@"arrNode%d＝%@", i, arrImportantNode[i]);
-    }
     
-    for(int i =0;i < [arrImportantSentence count];i++){
-        NSLog(@"arrSentence%d=%@",i, arrImportantSentence[i]);
-    }
-    
+    //test
     //stringを句点(。)で分割して文章に分割
-    NSArray *arrSentence = [NSArray array];//空配列
-    NSCharacterSet *spr = [NSCharacterSet characterSetWithCharactersInString:@"\n。"];//複数文字列を指定
-    arrSentence = [strReturnBody componentsSeparatedByCharactersInSet:spr];
-    //以下トークン分割はcomponentsSeparatedByCharactersInSet:で複数指定可能
-//    arrSentence = [strReturnBody componentsSeparatedByString:@"。"];//句点で分割
-    
-    //参考：「」で囲われてる文字列は。で区切らない方が良い。むしろ、鍵カッコを区切り文字として、中の文章は一つのとして扱う
-    for(int i = 0;i < [arrSentence count];i++){
-        NSLog(@"sentence%d=%@", i, arrSentence[i]);
-    }
-    
-    //mecabによる形態素解析
-    NSArray *arrayNodes = [mecab parseToNodeWithString:arrSentence[0]];//テキストをメカブで形態素解析してnodes(UITableCell)に格納
-    for(int i = 0 ;i < [arrayNodes count];i++){
-        Node *node = arrayNodes[i];
-        NSLog(@"%@ : 品詞=%@", node.surface, node.partOfSpeech);
-    }
+//    NSArray *arrSentence = [NSArray array];//空配列
+//    NSCharacterSet *spr = [NSCharacterSet characterSetWithCharactersInString:@"\n。"];//複数文字列を指定
+//    arrSentence = [strReturnBody componentsSeparatedByCharactersInSet:spr];
+//    //以下トークン分割はcomponentsSeparatedByCharactersInSet:で複数指定可能
+////    arrSentence = [strReturnBody componentsSeparatedByString:@"。"];//句点で分割
+//    
+//    //参考：「」で囲われてる文字列は。で区切らない方が良い。むしろ、鍵カッコを区切り文字として、中の文章は一つのとして扱う
+//    for(int i = 0;i < [arrSentence count];i++){
+//        NSLog(@"sentence%d=%@", i, arrSentence[i]);
+//    }
+//    
+//    //mecabによる形態素解析
+//    NSArray *arrayNodes = [mecab parseToNodeWithString:arrSentence[0]];//テキストをメカブで形態素解析してnodes(UITableCell)に格納
+//    for(int i = 0 ;i < [arrayNodes count];i++){
+//        Node *node = arrayNodes[i];
+//        NSLog(@"%@ : 品詞=%@", node.surface, node.partOfSpeech);
+//    }
     
     
     
@@ -114,11 +115,18 @@ int noStatus;//現在の状態(どの区切りか)を判別:最初は一番左�
                          [[ArticleTable alloc] initWithType:TableTypeFinance],
                          nil];
     
-    for(int i = 0 ;i < [arrTable count];i++){
+    for(int i = 0 ;i < [arrTable count];i++){//全てのテーブルに対して
         for(int j = 0;j < 5;j++){//各テーブルに５個のセルを配置
+            
+            //記事セル作成
             ArticleCell *articleCell =
             [[ArticleCell alloc]initWithFrame:
-             CGRectMake(0, 0, 250, 100)];//位置はaddCellメソッド内で適当に配置
+             CGRectMake(0, 0, 250, 100)
+                                     withText:arrImportantSentence[j]
+             ];//位置はaddCellメソッド内で適切に配置
+            
+            //記事セルにテキストを格納
+//            articleCell.text = arrImportantSentence[j];
             
             [((ArticleTable *)arrTable[i]) addCell:articleCell];
             
