@@ -196,7 +196,12 @@ NSMutableArray *arrImportantNode;//重要語句(Node形式)
         
     }
     
-    arrTFIDF = [self getTfIdf];
+    //arrSentenceとarrNounUnique計算前提
+//    arrTFIDF = [self getTfIdf];
+//    for(int j =0;j < [arrSentence count];j++){
+//        NSLog(@"doc of %d 's tfidf=%f",
+//              j, [arrTFIDF[j] doubleValue]);
+//    }
     
     
     [self setImportantSentence];//arrImportantSentence,Nodeに格納
@@ -762,7 +767,16 @@ NSMutableArray *arrImportantNode;//重要語句(Node形式)
     
     
     //④tfidfの設定
-    
+    NSMutableArray *arrTFIDF = [self getTfIdf];
+    for(int j = 0;j < [arrTFIDF count];j++){
+//        NSLog(@"tfidf%d : %@ is %f",
+//              j ,arrSentence[j], [arrTFIDF[j] doubleValue]);
+        if([arrTFIDF[j] doubleValue] > 1.5f){//tfidf is bigger than 1.5f
+            _arrScoreSentence[j] =
+            [NSNumber numberWithInteger:
+             [_arrScoreSentence[j] integerValue] + scoreAddingToSentence];
+        }
+    }
     
     
     NSLog(@"重要文章の表示:3点以上");
@@ -823,7 +837,6 @@ NSMutableArray *arrImportantNode;//重要語句(Node形式)
     
     NSMutableArray *_arrIDF = [NSMutableArray array];//idf:num=[arrNounUnique count]
     
-    NSMutableArray *_arrN_ij = [NSMutableArray array];//tf値の分母:num=[arrSentence count]
     
     NSString *_term;//検索したい単語
     for(int i = 0;i < [arrNounUnique count];i++){//全ての単語に対して
@@ -841,12 +854,18 @@ NSMutableArray *arrImportantNode;//重要語句(Node形式)
                       i,_term,noSen,arrSentence[noSen],_d_i);
             }
         }
+        
+        //_d_iは単語iを含む文章数なので必ずDより小さくなる
+//        NSLog(@"error at %d is _d_i=%d,D=%d => log=%f",
+//              i, _d_i, D, log(D/_d_i));
+        
+        
         _arrIDF[i] = [NSNumber numberWithDouble:log(D/_d_i)];
         //[_arr_di addObject:[NSNumber numberWithFloat:log(D/_score)]];
         
         //完了
-        NSLog(@"単語%d「%@」のidf値は%f",
-              i,_term,[_arrIDF[i] floatValue]);
+//        NSLog(@"単語%d「%@」のidf値は%f",
+//              i,_term,[_arrIDF[i] floatValue]);
         
         //単語iのための文章の数の要素数を持つ配列：nijの計算用
         NSMutableArray *_arrTmp = [NSMutableArray array];
@@ -909,8 +928,9 @@ NSMutableArray *arrImportantNode;//重要語句(Node形式)
     for(int noSen = 0;noSen < [arrSentence count];noSen++){//全文章に対して
         double _tfidf = 0;
         for(int noTerm = 0;noTerm < [arrNounUnique count];noTerm++){//全単語に対して
-            _tfidf =
+            _tfidf +=
             [_arrTF[noTerm][noSen] doubleValue] * [_arrIDF[noTerm] doubleValue];
+            
         }
         
         //tfidf値を格納
