@@ -9,7 +9,9 @@ Genetic algorithm
 
 h3. environment
 
-xcode5(iOS7)
+Mac Mavericks
+xcode5
+iPhone(iOS7)
 
 h2. 
 
