@@ -15,7 +15,7 @@ iPhone(iOS7)
 
 h2. 
 
-このアプリケーションを作成するにあたり、以下のサイトを参考にさせて頂きました。
+Developing this application, reffered below sites.
 
 Mecab
 "Mecab":http://mecab.sourceforge.net/
