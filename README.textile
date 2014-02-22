@@ -1,33 +1,25 @@
-h1. 形態素解析エンジンMecab on iPhone（Cocoa Static Library版）
+h1. automatic news abstraction application
 
-形態素解析エンジン Mecab を iPhone 上で利用するサンプルアプリケーションです。
-Mecab を Cocoa Touch Static Libaray としてビルドしています。
 
-!/FLCLjp/iPhone-libmecab/raw/master/screenshot.png!
+h3. Technology
 
-h2. ビルド方法
+Mecab on iPhone（ver. Cocoa Static Library）
+NeuralNetwork
+Genetic algorithm
 
-h3. xcode 4
+h3. environment
 
-# LibMecabSample/LibMecabSample.xcodeproj を開きます。
-# ビルドターゲットで LibMecabSample を選びビルドします。
+xcode5(iOS7)
 
-h3. xcode 3
-
-# mecab/mecab.xcodeproj を開きます。
-# ターゲット（Device/Simulator）、構成を選びビルドします。
-# LibMecabSample/LibMecabSample.xcodeproj を開きます。
-# 先ほどビルドしたものと同じターゲット、構成でビルドします。
-
-h2. ライセンス
-
-Mecab およびその関連ファイルについては、各ライブラリーのライセンスに従いご利用ください。
-サンプルアプリケーションについてはライセンスなどの制限は設けておりません。ご自由にご利用ください。
-
-h2. 謝辞
+h2. 
 
 このアプリケーションを作成するにあたり、以下のサイトを参考にさせて頂きました。
 
+Mecab
 "Mecab":http://mecab.sourceforge.net/
 "Mac OS X Leopard に「標準で」インストールされている MeCabを使ってみる - きまぐれ日記":http://chasen.org/~taku/blog/archives/2008/07/mac_os_x_leropa.html
 "iPhoneからMeCabを呼びたい - pokosho!":http://pokosho.com/b/archives/1012
+
+Neuralnetwork
+http://page.mi.fu-berlin.de/rojas/neural/chapter/K7.pdf
+

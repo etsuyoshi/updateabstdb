@@ -767,7 +767,9 @@ NSMutableArray *arrImportantNode;//重要語句(Node形式)
     
     
     //④tfidfの設定
-    NSMutableArray *arrTFIDF = [self getTfIdf];
+    NSMutableArray *arrTFIDF =
+    [self getTfIdfWithArrSentence:(NSMutableArray *)arrSentence
+                withArrNounUnique:(NSMutableArray *)arrNounUnique];
     for(int j = 0;j < [arrTFIDF count];j++){
 //        NSLog(@"tfidf%d : %@ is %f",
 //              j ,arrSentence[j], [arrTFIDF[j] doubleValue]);
@@ -823,35 +825,36 @@ NSMutableArray *arrImportantNode;//重要語句(Node形式)
 }
 
 
--(NSMutableArray *)getTfIdf{
+-(NSMutableArray *)getTfIdfWithArrSentence:(NSMutableArray *)_arrSentenceArg
+                         withArrNounUnique:(NSMutableArray *)_arrNounUniqueArg{
     
     /*
      tf[i,j]=nij/sigm[nkj]k;短い文書の中に表れる単語の重要度を上げる
      *nij=単語iの文書jにおける出現頻度
      *idf[i]=log(|D|/|{d:d<ti}|=総ドキュメント数/単語iが含まれる文章数
-     *重複した単語を調べても意味がないので単語はarrNounUniqueを使用
+     *重複した単語を調べても意味がないので単語は_arrNounUniqueArgを使用
      */
-    int D = [arrSentence count];//idf分子
-    NSMutableArray *_arrTFIDF = [NSMutableArray array];//tfidf:num=[arrSentence count]
-    NSMutableArray *_arrTF = [NSMutableArray array];//tf:num=[arrNounUnique count]x[arrSentence count]
+    int D = [_arrSentenceArg count];//idf分子
+    NSMutableArray *_arrTFIDF = [NSMutableArray array];//tfidf:num=[_arrSentenceArg count]
+    NSMutableArray *_arrTF = [NSMutableArray array];//tf:num=[_arrNounUniqueArg count]x[_arrSentenceArg count]
     
-    NSMutableArray *_arrIDF = [NSMutableArray array];//idf:num=[arrNounUnique count]
+    NSMutableArray *_arrIDF = [NSMutableArray array];//idf:num=[_arrNounUniqueArg count]
     
     
     NSString *_term;//検索したい単語
-    for(int i = 0;i < [arrNounUnique count];i++){//全ての単語に対して
+    for(int i = 0;i < [_arrNounUniqueArg count];i++){//全ての単語に対して
         int _d_i = 0;//単語iのidf値の分母
-        _term = ((Node *)arrNounUnique[i]).surface;
+        _term = ((Node *)_arrNounUniqueArg[i]).surface;
         
         //idf[j]配列の計算
-        for(int noSen = 0;noSen < [arrSentence count];noSen++){//全ての文章に対して
-            if([(NSString *)arrSentence[noSen] rangeOfString:_term].location
+        for(int noSen = 0;noSen < [_arrSentenceArg count];noSen++){//全ての文章に対して
+            if([(NSString *)_arrSentenceArg[noSen] rangeOfString:_term].location
                != NSNotFound){//単語iが文章noSenに含まれていれば
                 _d_i++;
                 
                 //test
                 NSLog(@"単語%d「%@」は文章%d:「%@」に含まれる＝＞score=%d",
-                      i,_term,noSen,arrSentence[noSen],_d_i);
+                      i,_term,noSen,_arrSentenceArg[noSen],_d_i);
             }
         }
         
@@ -870,15 +873,15 @@ NSMutableArray *arrImportantNode;//重要語句(Node形式)
         //単語iのための文章の数の要素数を持つ配列：nijの計算用
         NSMutableArray *_arrTmp = [NSMutableArray array];
         //tf[i,j]の計算:単語iが文章jに含まれる個数
-        for(int j = 0;j < [arrSentence count];j++){
+        for(int j = 0;j < [_arrSentenceArg count];j++){
             
             //http://stackoverflow.com/questions/2166809/number-of-occurrences-of-a-substring-in-an-nsstring
-            NSUInteger count = 0, length = [arrSentence[j] length];
+            NSUInteger count = 0, length = [_arrSentenceArg[j] length];
             NSRange range = NSMakeRange(0, length);
             
             while(range.location != NSNotFound){
                 range =
-                [arrSentence[j] rangeOfString: _term
+                [_arrSentenceArg[j] rangeOfString: _term
                                       options:0
                                         range:range];
                 if(range.location != NSNotFound){
@@ -901,8 +904,8 @@ NSMutableArray *arrImportantNode;//重要語句(Node形式)
     //nkj：nijの分母の計算
     //文章の個数だけある配列の定義
     NSMutableArray *_arrDenominatorOfTf = [NSMutableArray array];
-    //_arrTF配列を横方向(arrSentenceと同じ)、縦方向に見ていく
-    for(int j =0;j < [arrSentence count];j++){//_arrTfを横方向に見ていく
+    //_arrTF配列を横方向(_arrSentenceArgと同じ)、縦方向に見ていく
+    for(int j =0;j < [_arrSentenceArg count];j++){//_arrTfを横方向に見ていく
         //その文章の中に全ての単語が幾つ含まれるか(規格化するための分母)
         int _score = 0;
         for(int i = 0;i < [_arrTF count];i++){//_arrTFを縦方向に見ていく
@@ -914,9 +917,9 @@ NSMutableArray *arrImportantNode;//重要語句(Node形式)
     }
     
     //上記nkjで規格化(_arrDenominatorOfTfで除算)して
-    for(int j = 0;j < [arrSentence count];j++){
+    for(int j = 0;j < [_arrSentenceArg count];j++){
         double _denominator = [_arrDenominatorOfTf[j] doubleValue];
-        for(int i = 0;i < [arrNounUnique count];i++){
+        for(int i = 0;i < [_arrNounUniqueArg count];i++){
             _arrTF[i][j] =
             [NSNumber numberWithDouble:
              ([_arrTF[i][j] doubleValue]/_denominator)
@@ -925,9 +928,9 @@ NSMutableArray *arrImportantNode;//重要語句(Node形式)
     }
     
     //tfidf値の計算
-    for(int noSen = 0;noSen < [arrSentence count];noSen++){//全文章に対して
+    for(int noSen = 0;noSen < [_arrSentenceArg count];noSen++){//全文章に対して
         double _tfidf = 0;
-        for(int noTerm = 0;noTerm < [arrNounUnique count];noTerm++){//全単語に対して
+        for(int noTerm = 0;noTerm < [_arrNounUniqueArg count];noTerm++){//全単語に対して
             _tfidf +=
             [_arrTF[noTerm][noSen] doubleValue] * [_arrIDF[noTerm] doubleValue];
             
