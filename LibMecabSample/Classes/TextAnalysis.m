@@ -410,10 +410,14 @@ NSMutableArray *arrImportantNode;//重要語句(Node形式)
     NSArray *arrNodes = [self getNode:string];
     Node *node;
     NSString *strForAppend = @"";//連結用文字列
+    int numOfAppend = 0;//連結した文字の個数(連結していない状態をゼロ)
     for(int i =0;i < [arrNodes count];i++){
+        numOfAppend = 0;
         node = arrNodes[i];
-        
-        if([node.partOfSpeech isEqualToString:@"名詞"]){
+        if([[node.features objectAtIndex:1] isEqualToString:@"非自立"]){
+            //こと、ため、の(名詞格)は非自立の名詞であるが、arrNounとしては不要
+            continue;
+        }else if([node.partOfSpeech isEqualToString:@"名詞"]){
             
             
             //数字である場合
@@ -426,24 +430,32 @@ NSMutableArray *arrImportantNode;//重要語句(Node形式)
                         int k = i + 1;
                         for(;k < [arrNodes count];k++){//次のindex:iを検索していく
                             Node *nodeTmp = arrNodes[k];
+                            //以下、後ろにある単語に数字が続かないか検索していく
                             if([self isInArrayAt:arrNumber value:nodeTmp.surface]){//まずは検索
                                 for(int L = 0;L < [arrNumber count];L++){//全ての数字との一致検索
                                     if([nodeTmp.surface isEqualToString:arrNumber[L]]){
                                         strForAppend = [NSString stringWithFormat:@"%@%@",
                                                      strForAppend,arrNumber[L]];
+                                        numOfAppend++;
                                         break;//for-L
                                     }
                                 }//for-L
                             }else{//後ろの文字が数字ではない場合
                                 
-                                //後ろの文字(index:k)のが接尾語である場合、(数字の後に)単位が続いている可能性があるので接続する
+                                //後ろの文字(index:k)のが接尾語である場合、
+                                //ここのブロックでは数字の後に続くことになるので単位である可能性があるので接続する
                                 //ex.2001年、２月、５日等
-                                NSArray *arrFeatures = nodeTmp.features;//例：名詞,固有名詞,人名,姓,*,*,伊藤,イトウ,イトー
+                                NSArray *arrFeatures = nodeTmp.features;
+                                
+                                //arrFeaturesの中に入る配列の例
+                                //例：名詞,接尾,・・・
+                                //例：名詞,固有名詞,人名,姓,*,*,伊藤,イトウ,イトー
                                 if([arrFeatures[1] isEqualToString:@"接尾"]){
                                     //数字と接尾語を連結
                                     strForAppend = [NSString stringWithFormat:@"%@%@",
                                                  strForAppend, nodeTmp.surface];
                                     k++;//次のノードを先取りしたので、次はi = k+1番目から調べていく
+                                    numOfAppend++;
                                     
                                 }
                                 
@@ -453,8 +465,9 @@ NSMutableArray *arrImportantNode;//重要語句(Node形式)
                             }
                         }//for-k
                         
+                        //kはi+1からスタートしているためループ実行判定条件はkがi+2以上であるということ
                         if(k > i + 1){//「上記for-kループが一回以上実行された」＝「arrNodes配列に数字が含まれていた」
-                            //続きは(数字ではない)k番目のnodeから実行させる
+                            //次のiループで続きは(数字ではない)k番目のnodeから実行させる
                             i=k-1;//重要！
                             
                             //一回ループが回った＝連続した数字は連結済(※離れた場所に数字がある可能性は残されたまま)
@@ -464,24 +477,64 @@ NSMutableArray *arrImportantNode;//重要語句(Node形式)
                     }//if:node==arrayNumber
                 }//for-j
             }//if:number
-            else if([[node.features objectAtIndex:1]
-                     isEqualToString:@"固有名詞"]){//品詞分類１が固有名詞等の場合
-                
+            else if([[node.features objectAtIndex:1] isEqualToString:@"固有名詞"] ||
+                    [[node.features objectAtIndex:1] isEqualToString:@"一般"]
+                    ){//ターゲットの品詞分類１が固有名詞等の場合
+                strForAppend = node.surface;//これから接続する固有名詞(または接尾辞)を格納する
                 //次も固有名詞であれば連結された固有名詞である可能性が高い
-                int k = i + 1;
+//                int k = i + 1;
                 Node *nodeTmp = nil;
-                for(;k < [arrNodes count];k++){
+                for(int k = i + 1;k < [arrNodes count];k++){
                     nodeTmp = arrNodes[k];
-                    if([[nodeTmp.features objectAtIndex:1] isEqualToString:@"固有名詞"]){
-//                        NSLog(@"%@に%@を連結", node.surface, nodeTmp.surface);
+                    //固有(又は一般)名詞の後に固有(もしくは一般)名詞が来た場合は連結する
+                    if([[nodeTmp.features objectAtIndex:1] isEqualToString:@"固有名詞"] ||
+                       [[nodeTmp.features objectAtIndex:1] isEqualToString:@"一般"]){
                         strForAppend = [NSString stringWithFormat:@"%@%@",
                                         strForAppend,nodeTmp.surface];
+                        
+                        NSLog(@"%@に%@を連結=>%@", node.surface, nodeTmp.surface, strForAppend);
+                        numOfAppend++;
+                        
                     }else{
-                        break;
-                    }
-                }
+                        
+                        NSLog(@"固有名詞「%@」の後に「%@(%@)」",
+                              strForAppend,
+                              ((Node *)nodeTmp).surface,
+                              [((Node *)nodeTmp).features objectAtIndex:1]);
+                        
+                        //if:ターゲット(固有名詞)の後に接尾辞の出現
+                        
+                        if([[nodeTmp.features objectAtIndex:1] isEqualToString:@"接尾"]){
+//                        if([[((Node *)arrNodes[i+1]).features objectAtIndex:1] isEqualToString:@"接尾"]){
+                            NSLog(@"%@に%@を連結", strForAppend, nodeTmp.surface);
+                            strForAppend = [NSString stringWithFormat:@"%@%@",
+                                            strForAppend,nodeTmp.surface];
+                            
+                            k++;
+                            numOfAppend++;
+                            
+                            
+                            
+                        }//if:ターゲット(固有名詞)の後に接尾辞の出現
+                        
+                        
+                        
+                        
+                        //kはi+1からスタートしているためループ実行判定条件はkがi+2以上であるということ
+                        if(k > i + 1){//「上記for-kループが一回以上実行された」＝「arrNodes配列に数字が含まれていた」
+                            //続きは(数字ではない)k番目のnodeから実行させる
+                            i=k-1;//重要！
+                            
+                            //一回ループが回った＝連続した固有名詞(接尾辞)は連結済
+                            
+                        }
+                        
+                        break;//for-k
+                    }//if:ターゲット(固有名詞)の後に固有名詞の連続出現
+                    
+                }//for-k
                 
-            }
+            }//if:ターゲットが固有名詞である場合
         //        Node *node = arrayNodes[i];
         //        NSLog(@"%@ : 品詞=%@", node.surface, node.partOfSpeech);
         
@@ -702,6 +755,9 @@ NSMutableArray *arrImportantNode;//重要語句(Node形式)
         [_arrScoreNode addObject:[NSNumber numberWithInteger:0]];
     }
     
+    
+    //文章及び加点への加点開始①〜④
+    
     //①タイトルの包含
     //タイトルに含まれる語句に加点
     //「タイトルに含まれる語句」を含む文章に加点
@@ -781,9 +837,14 @@ NSMutableArray *arrImportantNode;//重要語句(Node形式)
     }
     
     
-    NSLog(@"重要文章の表示:3点以上");
+    //文章、及びキーワードへの加点終了
+    
+    int threasholdForSentence = 3;
+    int threasholdForNode = 2;
+    
+    NSLog(@"重要文章の表示:%d点以上", threasholdForSentence);
     for(int i = 0;i < [arrSentence count];i++){
-        if([_arrScoreSentence[i] integerValue] > 2){
+        if([_arrScoreSentence[i] integerValue] >= threasholdForSentence){
             NSLog(@"score=%d:index%d:%@",
                   [_arrScoreSentence[i] integerValue],
                   i,
@@ -796,13 +857,17 @@ NSMutableArray *arrImportantNode;//重要語句(Node形式)
     }
     
     
-    NSLog(@"重要語句の表示:5点以上");
+    NSLog(@"重要語句の表示:%d点以上", threasholdForNode);
     for(int j = 0;j < [arrNounUnique count];j++){
-        if([_arrScoreNode[j] integerValue] > 4){
-            NSLog(@"score=%d:index:%d:%@",
+        if([_arrScoreNode[j] integerValue] >= threasholdForNode){
+            NSLog(@"score=%d:index:%d:%@(品詞分類１:%@,品詞分類２:%@)",
                   [_arrScoreNode[j] integerValue],
                   j,
-                  ((Node *)arrNounUnique[j]).surface);
+                  ((Node *)arrNounUnique[j]).surface,
+                  [((Node *)arrNounUnique[j]).features objectAtIndex:0],
+                  [((Node *)arrNounUnique[j]).features objectAtIndex:1]);
+            
+            //[[nodeTmp.features objectAtIndex:1] isEqualToString:@"固有名詞"]){
             
             //重要語句の格納:順番通りになっていない
             [arrImportantNode

@@ -25,3 +25,5 @@ Mecab
 Neuralnetwork
 http://page.mi.fu-berlin.de/rojas/neural/chapter/K7.pdf
 
+Genetic algorithm
+..
