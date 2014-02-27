@@ -7,6 +7,7 @@
 //
 
 #import "ArticleCell.h"
+#import "TextViewController.h"
 
 @implementation ArticleCell
 @synthesize text = _text;
@@ -20,25 +21,20 @@
 }
 -(id)initWithFrame:(CGRect)frame withText:(NSString *)_textArg{
     self = [super initWithFrame:frame];
+    NSLog(@"text=%@", _textArg);
     
-    self.text = _textArg;
     
     
     if(self){
-        [self initializer];
+        [self initializerWithText:_textArg];
+        self.text = _textArg;
         
-        UITapGestureRecognizer *tapGesture;
-        tapGesture = [[UITapGestureRecognizer alloc]
-                      initWithTarget:self
-                      action:@selector(onTapped:)];
-        [self addGestureRecognizer:tapGesture];
-        self.userInteractionEnabled = YES;
     }
     
     return self;
 }
 
--(void)initializer{
+-(void)initializerWithText:(NSString *)_strText{
     @autoreleasepool {
         //デフォルト値：インスタンス化した後も設定可能
         self.translucentAlpha = 0.8f;
@@ -52,16 +48,15 @@
         uil.textColor = [UIColor blueColor];
         uil.font = [UIFont fontWithName:@"AppleGothic" size:12];
         uil.textAlignment = NSTextAlignmentCenter;
-        uil.text = self.text;
+        uil.text = _strText;
+        uil.numberOfLines = 5;
+//        NSLog(@"text=%@", _strText);
         
         
         [self addSubview:uil];
     }
 }
 
--(void)onTapped:(UITapGestureRecognizer *)gr{
-    NSLog(@"ontapped");
-}
 
 
 @end

@@ -97,9 +97,9 @@ NSMutableArray *arrImportantNode;//重要語句(Node形式)
         arrSentence = [self getArrSentence];
         
         //確認
-        for(int i = 0;i < [arrSentence count];i++){
-            NSLog(@"sentence%d is %@", i, [arrSentence objectAtIndex:i]);
-        }
+//        for(int i = 0;i < [arrSentence count];i++){
+//            NSLog(@"sentence%d is %@", i, [arrSentence objectAtIndex:i]);
+//        }
         
         arrSemiSentence = [self getArrSemiSentenceFrom:arrSentence];
         
@@ -179,7 +179,7 @@ NSMutableArray *arrImportantNode;//重要語句(Node形式)
                    isEqualToString:
                    ((Node *)arrNounUnique[j]).surface]){
                     
-                    NSLog(@"break! at %d %d, %@", i, j, ((Node *)arrNounUnique[i]).surface);
+//                    NSLog(@"break! at %d %d, %@", i, j, ((Node *)arrNounUnique[i]).surface);
                     break;
                 }
             }
@@ -211,7 +211,8 @@ NSMutableArray *arrImportantNode;//重要語句(Node形式)
 }
 
 -(NSArray *)getImportantSentence{
-    
+    NSLog(@"get important sentence count=%d,",
+          [arrImportantSentence count]);
     return arrImportantSentence;
 }
 
@@ -492,21 +493,21 @@ NSMutableArray *arrImportantNode;//重要語句(Node形式)
                         strForAppend = [NSString stringWithFormat:@"%@%@",
                                         strForAppend,nodeTmp.surface];
                         
-                        NSLog(@"%@に%@を連結=>%@", node.surface, nodeTmp.surface, strForAppend);
+//                        NSLog(@"%@に%@を連結=>%@", node.surface, nodeTmp.surface, strForAppend);
                         numOfAppend++;
                         
                     }else{
                         
-                        NSLog(@"固有名詞「%@」の後に「%@(%@)」",
-                              strForAppend,
-                              ((Node *)nodeTmp).surface,
-                              [((Node *)nodeTmp).features objectAtIndex:1]);
+//                        NSLog(@"固有名詞「%@」の後に「%@(%@)」",
+//                              strForAppend,
+//                              ((Node *)nodeTmp).surface,
+//                              [((Node *)nodeTmp).features objectAtIndex:1]);
                         
                         //if:ターゲット(固有名詞)の後に接尾辞の出現
                         
                         if([[nodeTmp.features objectAtIndex:1] isEqualToString:@"接尾"]){
 //                        if([[((Node *)arrNodes[i+1]).features objectAtIndex:1] isEqualToString:@"接尾"]){
-                            NSLog(@"%@に%@を連結", strForAppend, nodeTmp.surface);
+//                            NSLog(@"%@に%@を連結", strForAppend, nodeTmp.surface);
                             strForAppend = [NSString stringWithFormat:@"%@%@",
                                             strForAppend,nodeTmp.surface];
                             
@@ -541,7 +542,7 @@ NSMutableArray *arrImportantNode;//重要語句(Node形式)
             if([strForAppend isEqualToString:@""]){
                 [arrReturn addObject:arrNodes[i]];
             }else{
-                NSLog(@"arrReturnに%@を追加", strForAppend);
+//                NSLog(@"arrReturnに%@を追加", strForAppend);
                 Node *oldNode = arrNodes[i];
                 Node *newNode = [Node new];
                 newNode.surface = strForAppend;
@@ -739,7 +740,7 @@ NSMutableArray *arrImportantNode;//重要語句(Node形式)
 //strTitle:タイトル文字列
 -(void)setImportantSentence{
     
-    NSLog(@"start setimportantsentence");
+//    NSLog(@"start setimportantsentence");
     //加算点数
     //文章に対して加算するスコア
     int scoreAddingToSentence = 1;
@@ -839,9 +840,11 @@ NSMutableArray *arrImportantNode;//重要語句(Node形式)
     
     //文章、及びキーワードへの加点終了
     
-    int threasholdForSentence = 3;
+    int threasholdForSentence = 5;
     int threasholdForNode = 2;
     
+    arrImportantSentence = [NSMutableArray array];
+    arrImportantNode = [NSMutableArray array];
     NSLog(@"重要文章の表示:%d点以上", threasholdForSentence);
     for(int i = 0;i < [arrSentence count];i++){
         if([_arrScoreSentence[i] integerValue] >= threasholdForSentence){
@@ -918,8 +921,8 @@ NSMutableArray *arrImportantNode;//重要語句(Node形式)
                 _d_i++;
                 
                 //test
-                NSLog(@"単語%d「%@」は文章%d:「%@」に含まれる＝＞score=%d",
-                      i,_term,noSen,_arrSentenceArg[noSen],_d_i);
+//                NSLog(@"単語%d「%@」は文章%d:「%@」に含まれる＝＞score=%d",
+//                      i,_term,noSen,_arrSentenceArg[noSen],_d_i);
             }
         }
         
@@ -928,7 +931,7 @@ NSMutableArray *arrImportantNode;//重要語句(Node形式)
 //              i, _d_i, D, log(D/_d_i));
         
         
-        _arrIDF[i] = [NSNumber numberWithDouble:log(D/_d_i)];
+        _arrIDF[i] = [NSNumber numberWithDouble:log(_d_i==0?-10:D/_d_i)];//-10に根拠はない(とりあえず)
         //[_arr_di addObject:[NSNumber numberWithFloat:log(D/_score)]];
         
         //完了

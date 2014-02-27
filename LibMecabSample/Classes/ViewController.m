@@ -9,6 +9,7 @@
 #define DispDatabaseLog
 
 #import "ViewController.h"
+#import "TextViewController.h"
 
 @interface ViewController ()
 
@@ -48,27 +49,12 @@ int noStatus;//現在の状態(どの区切りか)を判別:最初は一番左�
     
     
     
-//    @"id",
-//    @"datetime",
-//    @"blog_id",
-//    @"title",
-//    @"url",
-//    @"body_with_tags",
-//    @"body",
-//    @"hatebu",
-//    @"saveddate",
-    
-    //上記キー値を元にデータを取得
-    NSDictionary *dictTmp = [DatabaseManage getValueFromDBAt:3];
-    NSString *strReturnBody = [dictTmp objectForKey:@"body"];
-    NSLog(@"strTmp = %@", strReturnBody);
-    
-    TextAnalysis *textAnalysis = [[TextAnalysis alloc]initWithText:strReturnBody];
-    NSArray *arrImportantSentence = textAnalysis.getImportantSentence;
-    NSArray *arrImportantNode = textAnalysis.getImportantNode;
     
     
     //test
+//    NSLog(@"arrNode count=%d, arrSentence count=%d",
+//          [arrImportantNode count],
+//          [arrImportantSentence count]);
 //    for(int i =0;i < [arrImportantNode count];i++){
 //        NSLog(@"arrNode%d＝%@", i, arrImportantNode[i]);
 //    }
@@ -109,21 +95,65 @@ int noStatus;//現在の状態(どの区切りか)を判別:最初は一番左�
     //表示コンポーネントやデータの初期化等
     NSArray *arrTable = [NSArray arrayWithObjects:
                          [[ArticleTable alloc] initWithType:TableTypeTechnology],
-                         [[ArticleTable alloc] initWithType:TableTypeSports],
-                         [[ArticleTable alloc] initWithType:TableTypeArts],
-                         [[ArticleTable alloc] initWithType:TableTypeBusiness],
-                         [[ArticleTable alloc] initWithType:TableTypeFinance],
+//                         [[ArticleTable alloc] initWithType:TableTypeSports],
+//                         [[ArticleTable alloc] initWithType:TableTypeArts],
+//                         [[ArticleTable alloc] initWithType:TableTypeBusiness],
+//                         [[ArticleTable alloc] initWithType:TableTypeFinance],
                          nil];
     
+    int idArticle = 3;
     for(int i = 0 ;i < [arrTable count];i++){//全てのテーブルに対して
-        for(int j = 0;j < 5;j++){//各テーブルに５個のセルを配置
+        for(int j = 0;j < 2;j++){//各テーブルに５個のセルを配置
+            
+            
+            
+            //    @"id",
+            //    @"datetime",
+            //    @"blog_id",
+            //    @"title",
+            //    @"url",
+            //    @"body_with_tags",
+            //    @"body",
+            //    @"hatebu",
+            //    @"saveddate",
+            
+            //上記キー値を元にデータを取得
+            NSDictionary *dictTmp = [DatabaseManage getValueFromDBAt:idArticle++];
+            NSString *strReturnBody = [dictTmp objectForKey:@"body"];
+            NSLog(@"strTmp = %@", strReturnBody);
+            
+            TextAnalysis *textAnalysis = [[TextAnalysis alloc]initWithText:strReturnBody];
+            NSArray *arrImportantSentence = [textAnalysis getImportantSentence];
+            NSArray *arrImportantNode = [textAnalysis getImportantNode];
+            
+            //要約文章結合：temporary=>本来はタイトルと最重要な要約文章のみ表示して、クリックしたら別の要約文章全体を見せるようにしたい！！！
+            NSString *strAbstract = @"";
+            for(int noSen = 0;noSen < MIN([arrImportantSentence count],2);noSen++){
+                strAbstract = [NSString stringWithFormat:@"%@%@",
+                               strAbstract, arrImportantSentence[noSen]];
+            }
+            
+            NSString *strKeyward = @"";
+            for(int noWord = 0;noWord < MIN([arrImportantNode count],4);noWord++){
+                strKeyward = [NSString stringWithFormat:@"%@%@",
+                              strKeyward,
+                              ((Node *)arrImportantNode[noWord]).surface];
+            }
+            
             
             //記事セル作成
             ArticleCell *articleCell =
-            [[ArticleCell alloc]initWithFrame:
-             CGRectMake(0, 0, 250, 100)
-                                     withText:arrImportantSentence[j]
+            [[ArticleCell alloc]initWithFrame:CGRectMake(0, 0, 250, 100)//別の場所で指定するので位置情報に意味はない
+                                     withText:[NSString stringWithFormat:@"%@%@",strAbstract,strKeyward]
              ];//位置はaddCellメソッド内で適切に配置
+            
+            UITapGestureRecognizer *tapGesture;
+            tapGesture = [[UITapGestureRecognizer alloc]
+                          initWithTarget:self
+                          action:@selector(onTapped:)];
+            [articleCell addGestureRecognizer:tapGesture];
+            articleCell.userInteractionEnabled = YES;
+            
             
             //記事セルにテキストを格納
 //            articleCell.text = arrImportantSentence[j];
@@ -176,6 +206,22 @@ int noStatus;//現在の状態(どの区切りか)を判別:最初は一番左�
 //    articleView.translucentAlpha = 0.5f;
 ////    [self.view addSubview:articleView];
 //    [backgroundView addSubview:articleView];
+}
+
+
+-(void)onTapped:(UITapGestureRecognizer *)gr{
+    NSLog(@"ontapped");
+    
+    
+    
+    //呼出し元viewcontrollerで以下を実行
+    
+//    [self performSelector:@selector(gotoGame) withObject:nil];// afterDelay:0.1f];
+    TextViewController *tvcon = [[TextViewController alloc]initWithText:@"testtesttesttesttest"];
+    [self presentViewController:tvcon animated:NO completion:nil];
+    
+    
+    
 }
 
 

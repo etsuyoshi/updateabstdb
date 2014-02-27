@@ -46,6 +46,7 @@
 		3435874018AA34C600D8632B /* sunset.png in Resources */ = {isa = PBXBuildFile; fileRef = 3435873818AA34C600D8632B /* sunset.png */; };
 		3435874118AA34C600D8632B /* wood.png in Resources */ = {isa = PBXBuildFile; fileRef = 3435873918AA34C600D8632B /* wood.png */; };
 		3435874418AA3BE300D8632B /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 3435874318AA3BE300D8632B /* AppDelegate.m */; };
+		3497A20F18BDE42500CE5D63 /* TextViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 3497A20E18BDE42500CE5D63 /* TextViewController.m */; };
 		349D49DC18AB058400AF3FCD /* TextAnalysis.m in Sources */ = {isa = PBXBuildFile; fileRef = 349D49DB18AB058400AF3FCD /* TextAnalysis.m */; };
 		34EA200018A1FEFE004376A0 /* Tutorial.m in Sources */ = {isa = PBXBuildFile; fileRef = 34EA1FFF18A1FEFE004376A0 /* Tutorial.m */; };
 		34EA200318A1FF41004376A0 /* Contributor.m in Sources */ = {isa = PBXBuildFile; fileRef = 34EA200218A1FF41004376A0 /* Contributor.m */; };
@@ -119,6 +120,8 @@
 		3435873918AA34C600D8632B /* wood.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = wood.png; path = Classes/wood.png; sourceTree = "<group>"; };
 		3435874218AA3BE300D8632B /* AppDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
 		3435874318AA3BE300D8632B /* AppDelegate.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
+		3497A20D18BDE42500CE5D63 /* TextViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TextViewController.h; sourceTree = "<group>"; };
+		3497A20E18BDE42500CE5D63 /* TextViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TextViewController.m; sourceTree = "<group>"; };
 		349D49DA18AB058400AF3FCD /* TextAnalysis.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TextAnalysis.h; sourceTree = "<group>"; };
 		349D49DB18AB058400AF3FCD /* TextAnalysis.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TextAnalysis.m; sourceTree = "<group>"; };
 		34EA1FFE18A1FEFE004376A0 /* Tutorial.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Tutorial.h; sourceTree = "<group>"; };
@@ -304,6 +307,8 @@
 				3435878818AA537A00D8632B /* ILTrans */,
 				3435872618AA344500D8632B /* ArticleCell.h */,
 				3435872118AA344500D8632B /* ArticleCell.m */,
+				3497A20D18BDE42500CE5D63 /* TextViewController.h */,
+				3497A20E18BDE42500CE5D63 /* TextViewController.m */,
 				3435872218AA344500D8632B /* ArticleTable.h */,
 				3435872318AA344500D8632B /* ArticleTable.m */,
 				3435872418AA344500D8632B /* BackgroundView.h */,
@@ -460,6 +465,7 @@
 				34EA200B18A2001F004376A0 /* TFHpple.m in Sources */,
 				13C86E5B12C87B30006F2369 /* Mecab.m in Sources */,
 				34EA200018A1FEFE004376A0 /* Tutorial.m in Sources */,
+				3497A20F18BDE42500CE5D63 /* TextViewController.m in Sources */,
 				3435873118AA348D00D8632B /* ILTranslucentView.m in Sources */,
 				3435872918AA344500D8632B /* ArticleTable.m in Sources */,
 				13C86E5C12C87B30006F2369 /* Node.m in Sources */,
