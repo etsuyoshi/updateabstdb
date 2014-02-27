@@ -16,6 +16,8 @@
 //@property (nonatomic, copy) NSMutableArray *arrImportantNode;//重要語句(Node形式)
 
 -(id)initWithText:(NSString *)str;
+-(id)initWithText:(NSString *)str
+        withTitle:(NSString *)title;
 
 -(NSArray *)getImportantSentence;
 -(NSArray *)getImportantNode;

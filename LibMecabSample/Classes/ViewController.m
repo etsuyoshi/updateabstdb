@@ -120,25 +120,33 @@ int noStatus;//現在の状態(どの区切りか)を判別:最初は一番左�
             //上記キー値を元にデータを取得
             NSDictionary *dictTmp = [DatabaseManage getValueFromDBAt:idArticle++];
             NSString *strReturnBody = [dictTmp objectForKey:@"body"];
+            NSString *strTitle = [dictTmp objectForKey:@"title"];
             NSLog(@"strTmp = %@", strReturnBody);
             
-            TextAnalysis *textAnalysis = [[TextAnalysis alloc]initWithText:strReturnBody];
+            TextAnalysis *textAnalysis = [[TextAnalysis alloc]
+                                          initWithText:strReturnBody
+                                          withTitle:strTitle];
             NSArray *arrImportantSentence = [textAnalysis getImportantSentence];
             NSArray *arrImportantNode = [textAnalysis getImportantNode];
             
             //要約文章結合：temporary=>本来はタイトルと最重要な要約文章のみ表示して、クリックしたら別の要約文章全体を見せるようにしたい！！！
-            NSString *strAbstract = @"";
-            for(int noSen = 0;noSen < MIN([arrImportantSentence count],2);noSen++){
-                strAbstract = [NSString stringWithFormat:@"%@%@",
-                               strAbstract, arrImportantSentence[noSen]];
-            }
+//            NSString *strAbstract = @"";
+//            for(int noSen = 0;noSen < MIN([arrImportantSentence count],2);noSen++){
+//                strAbstract = [NSString stringWithFormat:@"%@%@",
+//                               strAbstract, arrImportantSentence[noSen]];
+//            }
+//            
+//            NSString *strKeyward = @"";
+//            for(int noWord = 0;noWord < MIN([arrImportantNode count],4);noWord++){
+//                strKeyward = [NSString stringWithFormat:@"%@%@",
+//                              strKeyward,
+//                              ((Node *)arrImportantNode[noWord]).surface];
+//            }
             
-            NSString *strKeyward = @"";
-            for(int noWord = 0;noWord < MIN([arrImportantNode count],4);noWord++){
-                strKeyward = [NSString stringWithFormat:@"%@%@",
-                              strKeyward,
-                              ((Node *)arrImportantNode[noWord]).surface];
-            }
+            ArticleData *articleData = [[ArticleData alloc]init];
+            articleData.title = strTitle;
+            articleData.arrImportantNode = arrImportantNode;
+            articleData.arrImportantSentence = arrImportantSentence;
             
             
             //記事セル作成
@@ -153,7 +161,7 @@ int noStatus;//現在の状態(どの区切りか)を判別:最初は一番左�
                           action:@selector(onTapped:)];
             [articleCell addGestureRecognizer:tapGesture];
             articleCell.userInteractionEnabled = YES;
-            
+            articleCell.tag=idArticle;
             
             //記事セルにテキストを格納
 //            articleCell.text = arrImportantSentence[j];
@@ -216,8 +224,14 @@ int noStatus;//現在の状態(どの区切りか)を判別:最初は一番左�
     
     //呼出し元viewcontrollerで以下を実行
     
-//    [self performSelector:@selector(gotoGame) withObject:nil];// afterDelay:0.1f];
-    TextViewController *tvcon = [[TextViewController alloc]initWithText:@"testtesttesttesttest"];
+    ArticleData *articleData = [[ArticleData alloc]init];
+    articleData.text = @"text";
+    articleData.title = @"title";
+    
+    
+    TextViewController *tvcon =
+    [[TextViewController alloc]
+     initWithArticle:(ArticleData *)articleData];
     [self presentViewController:tvcon animated:NO completion:nil];
     
     

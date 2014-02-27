@@ -10,6 +10,7 @@
 #import "DatabaseManage.h"
 #import "TextAnalysis.h"
 //#import "ArticleCell.h"
+#import "ArticleData.h"
 #import "BackgroundView.h"
 
 #import "Mecab.h"

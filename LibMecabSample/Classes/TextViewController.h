@@ -7,11 +7,13 @@
 //
 
 #import <UIKit/UIKit.h>
+#import "ArticleData.h"
 
 @interface TextViewController : UIViewController
+@property (nonatomic) NSString *strTitle;
 @property (nonatomic, copy) NSString *strText;
 
--(id)initWithText:(NSString *)str;
+-(id)initWithArticle:(ArticleData *)articleData;
 
 
 
