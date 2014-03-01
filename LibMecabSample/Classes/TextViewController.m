@@ -115,7 +115,7 @@ UIButton *uploadButton;//ブログへアップロードする
     
     uploadButton = [UIButton buttonWithType:UIButtonTypeCustom];
     [uploadButton setBackgroundColor:[UIColor blueColor]];
-    uploadButton.frame = CGRectMake(10, 10, 100, 40);
+    uploadButton.frame = CGRectMake(250, 10, 100, 40);
     
     [uploadButton addTarget:self
                      action:@selector(onTappedUploadButton:)
@@ -162,9 +162,12 @@ clickedButtonAtIndex:(NSInteger)buttonIndex {
         }
         case 1:{//更新実行
             //２番目のボタンが押されたときの処理を記述する
-            [DatabaseManage updateValueToDB:[NSString stringWithFormat:@"%d",self.idNo]
-                                     column:@"ispostblog"
-                                     newVal:@"1"];
+            
+            //抽出文章に重要キーワードを格納＝最終的にこれがブログにアップされるのでもう少し改良して文章になれるようにする
+            [DatabaseManage
+             updateValueToDB:[NSString stringWithFormat:@"%d",self.idNo]
+             column:@"abstforblog"
+             newVal:self.strKeyword];
             
             break;
             

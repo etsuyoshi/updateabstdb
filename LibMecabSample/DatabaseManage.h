@@ -29,6 +29,9 @@ typedef NS_ENUM(NSInteger, DataType) {
 +(Boolean)updateValueToDB:(NSString *)user_id
                    column:(NSString *)column
                    newVal:(NSString *)newValue;
++(int)getLastIDFromDBUnder:(int)_idNo
+                  category:(int)_category;
+
 //最終的には以下のクラスは内部クラス用として使用し、外部からカラム名等を指定させないようにする(アクセス禁止)
 //-(NSString *)getValueFromDB:(NSString *)user_id column:(NSString *)column;
 //-(NSData *)formEncodedDataFromDictionary:(NSDictionary *)dict;

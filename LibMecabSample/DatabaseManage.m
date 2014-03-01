@@ -77,7 +77,9 @@
 
 
 //20140228:やるべきこと
-//TextViewControllerでアップロードボタンを押したときの挙動を実装->DatabaseManageクラスのupdateメソッドを使用
+//textviewcontrollerの記事取得ループ内でカテゴリを取得する
+//※最終的にはcategoryカラムも(textViewControllerでuploadボタン押下後に入力するような)更新プログラム(モジュール)を作成する
+//TextViewControllerでアップロードボタンを押したときの挙動を実装->DatabaseManageクラスのupdateメソッドを使用して(ispostフラグとabstblog文字列を格納する)
 //動作チェック:getLastIDFromDBUnder:category<->http://newsdb.lolipop.jp/tmp/dir/test/getidlastarticle.php
 //ViewControllerで記事読み込み(二重)ループ内でgetLastIDFrom...(上記メソッド)を実行
 //phpファイル名称をキャピタル文字で区切る(例：FC2BlogManager.php)
@@ -249,7 +251,7 @@
     NSData *data;
     data = [str dataUsingEncoding:NSUTF8StringEncoding];
     NSLog(@"str = %@", str);//ex.str = id=1&item=title
-    NSLog(@"return data = %@", data);//ex.return data = <69643d31 26697465 6d3d7469 746c65>
+    NSLog(@"return data(NSData型) = %@", data);//ex.return data = <69643d31 26697465 6d3d7469 746c65>
     return data;
 }
 

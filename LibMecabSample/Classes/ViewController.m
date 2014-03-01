@@ -7,6 +7,7 @@
 //
 
 #define DispDatabaseLog
+#define MaxRecordEveryPage 2
 
 #import "ViewController.h"
 #import "TextViewController.h"
@@ -25,13 +26,23 @@ NSMutableArray *arrArticleData;
 
 int noStatus;//現在の状態(どの区切りか)を判別:最初は一番左の状態
 
+-(id)init{
+    self = [super init];
+    NSLog(@"init");
+    if(self){
+        arrArticleData = [NSMutableArray array];
+        
+    }
+    
+    return self;
+}
+
 - (void)viewDidLoad
 {
     [super viewDidLoad];
     
     
     self.mecab = [Mecab new];
-    
     
     //test
 //    NSDictionary *dict = [DatabaseManage getRecordFromDBAt:0];
@@ -108,12 +119,34 @@ int noStatus;//現在の状態(どの区切りか)を判別:最初は一番左�
                          nil];
     
     //記事データ格納用配列の初期化
-    arrArticleData = [NSMutableArray array];
+    
     int countArticle = 0;
+    int category = 0;
+    int _noID = 100000;//最後にアップデートしたIDを格納しておく
     for(int i = 0 ;i < [arrTable count];i++){//全てのテーブルに対して
-        for(int j = 0;j < 2;j++){//各テーブルに５個のセルを配置
+        _noID = 100000;//最後にアップデートしたIDを格納しておく
+        //カテゴリ番号を取得する：ユーザーによって並べ替えられている
+        category = i;//i番目ページに対応するカテゴリを取得するように改良すべき(ユーザーによって並べ替えられている)
+        
+        
+        //レコード数の存在可否を判定
+        if(category != 0){
+            //sqlを発行して指定したカテゴリのレコード数を取得し、レコードが存在すれば以下のjループを回す:未実装
             
             
+            continue;//for-i
+        }
+        
+        
+        //レコード数が存在していればループが回る:現在カテゴリにおける記事数と最大記事数の小さい方
+        int numArticleInCategory = 5;//iによって動的に取得出来るようにする：未実装
+        for(int j = 0;j < MIN(numArticleInCategory, MaxRecordEveryPage);j++){//各テーブルにセルを配置
+            
+            
+            //ループで新しい記事から_noIDを取得していく
+            _noID = [DatabaseManage
+                     getLastIDFromDBUnder:_noID
+                     category:category];
             
             //    @"id",
             //    @"datetime",
@@ -129,10 +162,10 @@ int noStatus;//現在の状態(どの区切りか)を判別:最初は一番左�
             
             
             //上記キー値を元にデータを取得
-            NSDictionary *dictTmp = [DatabaseManage getRecordFromDBAt:countArticle];
+            NSDictionary *dictTmp = [DatabaseManage getRecordFromDBAt:_noID];
             NSString *strReturnBody = [dictTmp objectForKey:@"body"];
             NSString *strTitle = [dictTmp objectForKey:@"title"];
-            int _noID = [[dictTmp objectForKey:@"id"] integerValue];
+            _noID = [[dictTmp objectForKey:@"id"] integerValue];
             NSLog(@"strTmp = %@", strReturnBody);
             
             //http://qiita.com/yimajo/items/c9338a715016e7a812b1
@@ -194,9 +227,9 @@ int noStatus;//現在の状態(どの区切りか)を判別:最初は一番左�
                           action:@selector(onTapped:)];
             [articleCell addGestureRecognizer:tapGesture];
             articleCell.userInteractionEnabled = YES;
-            articleCell.tag=countArticle-3;//初期番号をゼロにするため
+            articleCell.tag=countArticle;//初期番号をゼロにするため
             
-            NSLog(@"tag=%d", countArticle-3);
+            NSLog(@"tag=%d", countArticle);
             
             //記事セルにテキストを格納
 //            articleCell.text = arrImportantSentence[j];
