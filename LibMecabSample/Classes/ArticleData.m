@@ -10,6 +10,7 @@
 
 @implementation ArticleData
 
+@synthesize noID;
 //@synthesize text;
 @synthesize title;
 

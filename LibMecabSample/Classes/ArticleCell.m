@@ -10,31 +10,51 @@
 #import "TextViewController.h"
 
 @implementation ArticleCell
-@synthesize text = _text;
+//@synthesize strTitle;
+//@synthesize text = _text;
+@synthesize articleData;
 //@synthesize imv = _imv;
 
 
--(id)initWithFrame:(CGRect)frame{
-    
-    return [self initWithFrame:frame
-                      withText:(NSString *)_text];
-}
--(id)initWithFrame:(CGRect)frame withText:(NSString *)_textArg{
+//-(id)initWithFrame:(CGRect)frame{
+//    
+//    return [self initWithFrame:frame
+//                      withText:(NSString *)_text];
+//}
+//-(id)initWithFrame:(CGRect)frame withText:(NSString *)_textArg{
+//    self = [super initWithFrame:frame];
+//    NSLog(@"text=%@", _textArg);
+//    
+//    
+//    
+//    if(self){
+//        [self initializerWithText:_textArg];
+//        self.text = _textArg;
+//        
+//    }
+//    
+//    return self;
+//}
+
+-(id)initWithFrame:(CGRect)frame
+   withArticleData:(ArticleData *)_articleData{
     self = [super initWithFrame:frame];
-    NSLog(@"text=%@", _textArg);
-    
-    
+    self.articleData = _articleData;
+    NSLog(@"ArticleCell initWithArticleData : %@",
+          self.articleData.title);
     
     if(self){
-        [self initializerWithText:_textArg];
-        self.text = _textArg;
+        [self initializerWithText:self.articleData];
+
         
     }
     
     return self;
 }
 
--(void)initializerWithText:(NSString *)_strText{
+
+
+-(void)initializerWithText:(ArticleData *)_articleData{
     @autoreleasepool {
         //デフォルト値：インスタンス化した後も設定可能
         self.translucentAlpha = 0.8f;
@@ -48,11 +68,9 @@
         uil.textColor = [UIColor blueColor];
         uil.font = [UIFont fontWithName:@"AppleGothic" size:12];
         uil.textAlignment = NSTextAlignmentCenter;
-        uil.text = _strText;
+        uil.text = _articleData.title;
         uil.numberOfLines = 5;
 //        NSLog(@"text=%@", _strText);
-        
-        
         [self addSubview:uil];
     }
 }

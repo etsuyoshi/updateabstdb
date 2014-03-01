@@ -9,9 +9,13 @@
 #import "ILTranslucentView.h"
 #import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
+#import "ArticleData.h"
 
 @interface ArticleCell : ILTranslucentView
 //@property (nonatomic, copy) UIImageView *imv;
-@property (nonatomic, copy) NSString *text;
--(id)initWithFrame:(CGRect)frame withText:(NSString *)_textArg;
+//@property (nonatomic) NSString *strTitle;
+//@property (nonatomic, copy) NSString *text;
+@property (nonatomic) ArticleData *articleData;
+//-(id)initWithFrame:(CGRect)frame withText:(NSString *)_textArg;
+-(id)initWithFrame:(CGRect)frame withArticleData:(ArticleData *)articleData;
 @end

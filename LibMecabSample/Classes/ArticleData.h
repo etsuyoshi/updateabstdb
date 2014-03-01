@@ -10,6 +10,7 @@
 
 @interface ArticleData : NSObject
 
+@property (nonatomic) int noID;
 @property (nonatomic) NSString *title;
 //@property (nonatomic) NSString *text;
 

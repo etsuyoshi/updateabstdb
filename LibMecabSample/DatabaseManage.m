@@ -14,18 +14,18 @@
 
 //DB名称を他クラスから指定しないようにする
 
-+(NSArray *)getValueFromDB{
++(NSArray *)getRecordFromDBAll{
     //全部出すのは時間がかかるので最大100記事まで取得
-    return [self getValueFromDBFor:100];
+    return [self getRecordFromDBFor:100];
 }
 
-+(NSArray *)getValueFromDBFor:(int)num{
++(NSArray *)getRecordFromDBFor:(int)num{
     @autoreleasepool {
         NSMutableArray *arrReturn = [NSMutableArray array];
         int _idNo = 1;
         NSDictionary *_dict;
         for(;_idNo < num;){//num個まで取得する
-            _dict = [self getValueFromDBAt:(int)_idNo];
+            _dict = [self getRecordFromDBAt:(int)_idNo];
             if([[_dict objectForKey:@"id"] isEqual:nil]){
                 break;
             }
@@ -40,7 +40,7 @@
     
     
 }
-+(NSDictionary *)getValueFromDBAt:(int)idNo{
++(NSDictionary *)getRecordFromDBAt:(int)idNo{
     @autoreleasepool {
         //カラム配列定義
         NSArray *arrColumn =
@@ -54,6 +54,8 @@
          @"body",
          @"hatebu",
          @"saveddate",
+         @"abstforblog",
+         @"ispostblog",
          nil];
         
         //カラムに対応するだけループしてデータを取り出す
@@ -72,7 +74,58 @@
         return _dict;
     }
 }
-//
+
+
+//20140228:やるべきこと
+//TextViewControllerでアップロードボタンを押したときの挙動を実装->DatabaseManageクラスのupdateメソッドを使用
+//動作チェック:getLastIDFromDBUnder:category<->http://newsdb.lolipop.jp/tmp/dir/test/getidlastarticle.php
+//ViewControllerで記事読み込み(二重)ループ内でgetLastIDFrom...(上記メソッド)を実行
+//phpファイル名称をキャピタル文字で区切る(例：FC2BlogManager.php)
+
+
+//指定したカテゴリ(DBカラム名：category)内で、指定したID以下で最大のidを返す
++(int)getLastIDFromDBUnder:(int)_idNo
+                  category:(int)_category{
+    
+    NSMutableDictionary *dict = [NSMutableDictionary dictionaryWithCapacity:0];
+    [dict setObject:[NSString stringWithFormat:@"%d",_idNo] forKey:@"id"];
+    [dict setObject:[NSString stringWithFormat:@"%d",_category] forKey:@"category"];
+    
+    NSData *data = [self formEncodedDataFromDictionary:dict];
+    //    NSURL *url = [NSURL URLWithString:@"http://satoshi.upper.jp/user/shooting/getvalue.php"];
+    //    NSURL *url = [NSURL URLWithString:@"http://test-lolipop-sql.lolipop.jp/junkai/managedb/getvalue.php"];
+    NSURL *url = [NSURL URLWithString:@"http://newsdb.lolipop.jp/tmp/dir/test/getIdLastArticle.php"];
+    
+    NSMutableURLRequest *req = [NSMutableURLRequest requestWithURL:url];
+    [req setHTTPMethod:@"POST"];
+    [req setHTTPBody:data];
+    
+    NSURLResponse *response;
+    NSError *error = nil;
+    NSData *result = [NSURLConnection sendSynchronousRequest:req
+                                           returningResponse:&response
+                                                       error:&error];
+    if(error){
+        NSLog(@"同期通信失敗");
+        return nil;
+    }else{
+        NSLog(@"同期通信成功");
+    }
+    
+    
+    NSString* resultValue =
+    [[NSString alloc]
+     initWithData:result
+     encoding:NSUTF8StringEncoding];//phpファイルのechoが返って来る
+    
+    NSLog(@"getValueFromDB = %@", resultValue);
+    
+    //ない場合は(null)が返ってくるのでint変換すると0になる(ゼロはDB上で存在しないid)
+    return [resultValue integerValue];
+}
+
+
+//指定したID(user_id)のレコードにおけるcolumnを取り出す
 +(NSString *)getValueFromDB:(NSString *)user_id column:(NSString *)column{
     
     //phpファイルの以下の変数にそれぞれ格納される：$sql = "select $_POST[item] from dbusermanage where id = '$_POST[id]'";
@@ -107,6 +160,54 @@
     
     return resultString;
 }
+
+
+
++(Boolean)updateValueToDB:(NSString *)user_id
+                   column:(NSString *)column
+                   newVal:(NSString *)newValue{
+    //他の値を更新しないようにチェック
+    if(!([column isEqualToString:@"abstforblog"] ||
+         [column isEqualToString:@"ispostblog"])){
+        NSLog(@"column error");
+        return false;
+    }
+    
+    //実行sql：$sql = "update dbusermanage SET $_POST[column] = '$_POST[value]' WHERE id = '$_POST[id]'";
+    NSMutableDictionary *dict = [NSMutableDictionary dictionaryWithCapacity:0];
+    [dict setObject:user_id forKey:@"id"];
+    [dict setObject:column forKey:@"column"];
+    [dict setObject:newValue forKey:@"value"];
+    NSData *data = [self formEncodedDataFromDictionary:dict];
+    //下記更新必要
+//    NSURL *url = [NSURL URLWithString:@"http://satoshi.upper.jp/user/shooting/updatevalue.php"];
+    NSURL *url = [NSURL URLWithString:@"http://newsdb.lolipop.jp/tmp/dir/test/updatevaluenews.php"];
+    NSMutableURLRequest *req = [NSMutableURLRequest requestWithURL:url];
+    [req setHTTPMethod:@"POST"];
+    [req setHTTPBody:data];
+    
+    NSURLResponse *response;
+    NSError *error = nil;
+    NSData *result = [NSURLConnection sendSynchronousRequest:req
+                                           returningResponse:&response
+                                                       error:&error];
+    if(error){
+        NSLog(@"同期通信失敗");
+        return false;
+    }else{
+        NSLog(@"同期通信成功");
+    }
+    
+    
+    NSString* resultString = [[NSString alloc] initWithData:result
+                                                   encoding:NSUTF8StringEncoding];//phpファイルのechoが返って来る
+    NSLog(@"userDB : updated : php comment = %@", resultString);
+    
+    
+    
+    return true;
+}
+
 
 +(NSData *)formEncodedDataFromDictionary:(NSDictionary *)dict
 {

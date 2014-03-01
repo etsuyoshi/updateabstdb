@@ -21,6 +21,8 @@
 
 BackgroundView *backgroundView;
 CGPoint pntStartDrag;
+NSMutableArray *arrArticleData;
+
 int noStatus;//現在の状態(どの区切りか)を判別:最初は一番左の状態
 
 - (void)viewDidLoad
@@ -31,6 +33,10 @@ int noStatus;//現在の状態(どの区切りか)を判別:最初は一番左�
     self.mecab = [Mecab new];
     
     
+    //test
+//    NSDictionary *dict = [DatabaseManage getRecordFromDBAt:0];
+//    NSLog(@"abstforblog=%@", [dict objectForKey:@"abstforblog"]);//nil
+//    NSLog(@"ispostblog=%d", [[dict objectForKey:@"ispostblog"] integerValue]);//0
     
 	// Do any additional setup after loading the view, typically from a nib.
     
@@ -101,7 +107,9 @@ int noStatus;//現在の状態(どの区切りか)を判別:最初は一番左�
 //                         [[ArticleTable alloc] initWithType:TableTypeFinance],
                          nil];
     
-    int idArticle = 3;
+    //記事データ格納用配列の初期化
+    arrArticleData = [NSMutableArray array];
+    int countArticle = 0;
     for(int i = 0 ;i < [arrTable count];i++){//全てのテーブルに対して
         for(int j = 0;j < 2;j++){//各テーブルに５個のセルを配置
             
@@ -116,12 +124,32 @@ int noStatus;//現在の状態(どの区切りか)を判別:最初は一番左�
             //    @"body",
             //    @"hatebu",
             //    @"saveddate",
+            //    @"abstforblog",
+            //    @"ispostblog",
+            
             
             //上記キー値を元にデータを取得
-            NSDictionary *dictTmp = [DatabaseManage getValueFromDBAt:idArticle++];
+            NSDictionary *dictTmp = [DatabaseManage getRecordFromDBAt:countArticle];
             NSString *strReturnBody = [dictTmp objectForKey:@"body"];
             NSString *strTitle = [dictTmp objectForKey:@"title"];
+            int _noID = [[dictTmp objectForKey:@"id"] integerValue];
             NSLog(@"strTmp = %@", strReturnBody);
+            
+            //http://qiita.com/yimajo/items/c9338a715016e7a812b1
+//            NSLog(@"abstforblog=%@", [dictTmp objectForKey:@"abstforblog"]);
+//            NSLog(@"ispostblog=%@", [dictTmp objectForKey:@"ispostblog"]);
+//            if([[dictTmp objectForKey:@"abstforblog"] isEqualToString:@"(null)"]){
+//                NSLog(@"string");
+//            }else if([dictTmp objectForKey:@"abstforblog"] == [NSNull null]){
+//                NSLog(@"null");
+//            }else if([[dictTmp objectForKey:@"abstforblog"] isEqualToString:@""]){
+//                NSLog(@"blank");
+//            }else if([dictTmp objectForKey:@"abstforblog"] == nil){
+//                NSLog(@"nil");
+//            }else{
+//                NSLog(@"other");
+//            }
+            
             
             TextAnalysis *textAnalysis = [[TextAnalysis alloc]
                                           initWithText:strReturnBody
@@ -144,15 +172,20 @@ int noStatus;//現在の状態(どの区切りか)を判別:最初は一番左�
 //            }
             
             ArticleData *articleData = [[ArticleData alloc]init];
+            articleData.noID = _noID;
             articleData.title = strTitle;
             articleData.arrImportantNode = arrImportantNode;
             articleData.arrImportantSentence = arrImportantSentence;
             
+            //全ての記事データ(articleData)を配列に格納して、タップされた時に参照出来るようにする
+            [arrArticleData addObject:articleData];
+            
             
             //記事セル作成
             ArticleCell *articleCell =
-            [[ArticleCell alloc]initWithFrame:CGRectMake(0, 0, 250, 100)//別の場所で指定するので位置情報に意味はない
-                                     withText:[NSString stringWithFormat:@"%@%@",strAbstract,strKeyward]
+            [[ArticleCell alloc]
+             initWithFrame:CGRectMake(0, 0, 250, 100)//別の場所で指定するので位置情報に意味はない
+             withArticleData:articleData
              ];//位置はaddCellメソッド内で適切に配置
             
             UITapGestureRecognizer *tapGesture;
@@ -161,7 +194,9 @@ int noStatus;//現在の状態(どの区切りか)を判別:最初は一番左�
                           action:@selector(onTapped:)];
             [articleCell addGestureRecognizer:tapGesture];
             articleCell.userInteractionEnabled = YES;
-            articleCell.tag=idArticle;
+            articleCell.tag=countArticle-3;//初期番号をゼロにするため
+            
+            NSLog(@"tag=%d", countArticle-3);
             
             //記事セルにテキストを格納
 //            articleCell.text = arrImportantSentence[j];
@@ -169,6 +204,8 @@ int noStatus;//現在の状態(どの区切りか)を判別:最初は一番左�
             [((ArticleTable *)arrTable[i]) addCell:articleCell];
             
 //            NSLog(@"arrtable%d = %@", i, arrTable[i]);
+            
+            countArticle++;
         }
     }
     
@@ -219,23 +256,20 @@ int noStatus;//現在の状態(どの区切りか)を判別:最初は一番左�
 
 -(void)onTapped:(UITapGestureRecognizer *)gr{
     NSLog(@"ontapped");
-    
-    
+    int noTapped = [(UIGestureRecognizer *)gr view].tag;
+    NSLog(@"%d",[(UIGestureRecognizer *)gr view].tag);
     
     //呼出し元viewcontrollerで以下を実行
     
-    ArticleData *articleData = [[ArticleData alloc]init];
-    articleData.text = @"text";
-    articleData.title = @"title";
+//    ArticleData *articleData = [[ArticleData alloc]init];
+//    articleData.text = @"text";
+//    articleData.title = @"title";
     
     
     TextViewController *tvcon =
     [[TextViewController alloc]
-     initWithArticle:(ArticleData *)articleData];
+     initWithArticle:(ArticleData *)arrArticleData[noTapped]];
     [self presentViewController:tvcon animated:NO completion:nil];
-    
-    
-    
 }
 
 
@@ -243,7 +277,7 @@ int noStatus;//現在の状態(どの区切りか)を判別:最初は一番左�
 
 -(void)getDataFromDB{
     //databasemanageクラスからデータを取得(引数なしだと最大100記事を取得)
-    NSArray *array = [DatabaseManage getValueFromDB];//100個取得
+    NSArray *array = [DatabaseManage getRecordFromDBAll];//100個取得
     
     NSString *strId = nil;
     NSString *strBody = nil;
