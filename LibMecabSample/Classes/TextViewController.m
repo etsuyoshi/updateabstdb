@@ -45,6 +45,7 @@ UIButton *uploadButton;//ブログへアップロードする
          @"中学生",@"高校生",@"大学生",@"小学生",@"キーワード",@"まさか",@"傘",@"雨",@"ベンツ",@"六本木",
          @"男性",@"テレビ",@"フェラーリ",@"まつたけ",@"ステーキ",@"渋谷",@"表参道",@"青山一丁目",@"新宿",
          @"東京",@"外苑前",@"後",@"性別",@"神田",@"浜松町",@"池尻大橋",@"鴬谷",@"上智",@"大学",@"ミシシッピ",@"asdfajlksdf",@"asdflkj",@"dfjdsaf",
+         @"連結",@"ニューロン",@"バックプロップ",@"英語",@"運動",@"遠足",@"散歩",
          nil];
         
         
@@ -82,18 +83,22 @@ UIButton *uploadButton;//ブログへアップロードする
             _strKeyword = _arrRandomWord[arc4random() % [_arrRandomWord count]];
         }
         
+        //被リンクを張る
+        _strKeyword = [NSString stringWithFormat:
+                       @"%@%@",
+                       _strKeyword,
+                       @"http://xn--wifi-to4c3j9d.jp/<BR>"];
+        
         //その後に重要文章を一つだけ配置(文章が存在すれば)
         if([articleData.arrImportantSentence count] > 0){
             int _no = 0 ;//arc4random() % [articleData.arrImportantSentence count];
             
             _strKeyword = [NSString stringWithFormat:
                            @"%@,%@",
-                           _strText,
+                           _strKeyword,
                            articleData.arrImportantSentence[_no]];
-            
-                           NSLog(@"aaaaaaaaaaaaaaaaaaaaaaaaaaaaa%@",
-                                 articleData.arrImportantSentence[_no]);
         }
+        
         
         //その後に重要語をランダムな順番で連結
         for(int i = 1;i < [articleData.arrImportantNode count];i++){
