@@ -251,10 +251,10 @@ int noStatus;//現在の状態(どの区切りか)を判別:最初は一番左�
             //                               strAbstract, arrImportantSentence[noSen]];
             //            }
             //
-            //            NSString *strKeyward = @"";
+            //            NSString *strKeyword = @"";
             //            for(int noWord = 0;noWord < MIN([arrImportantNode count],4);noWord++){
-            //                strKeyward = [NSString stringWithFormat:@"%@%@",
-            //                              strKeyward,
+            //                strKeyword = [NSString stringWithFormat:@"%@%@",
+            //                              strKeyword,
             //                              ((Node *)arrImportantNode[noWord]).surface];
             //            }
             
@@ -296,7 +296,7 @@ int noStatus;//現在の状態(どの区切りか)を判別:最初は一番左�
         }
     }
     
-    //一時しのぎ：本来ならばテキストだけ変えるとかarticleCellのみ変えるとかすべき
+    //一時しのぎ：本来ならばテキストだけ変えるとか,articleCellのみ変えるとかすべき
     [backgroundView removeFromSuperview];
     
     backgroundView = [[BackgroundView alloc]initWithTable:arrTable];

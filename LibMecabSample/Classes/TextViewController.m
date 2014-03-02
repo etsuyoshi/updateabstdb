@@ -38,32 +38,81 @@ UIButton *uploadButton;//ブログへアップロードする
         self.idNo = articleData.noID;
         self.strTitle = articleData.title;
         
+        
+        NSArray *_arrRandomWord =
+        [NSArray arrayWithObjects:
+         @"マシン",@"学習",@"なぜ",@"明日",@"車",@"女性",@"暴動",@"私",@"天気",@"地下鉄",@"カフェ",
+         @"中学生",@"高校生",@"大学生",@"小学生",@"キーワード",@"まさか",@"傘",@"雨",@"ベンツ",@"六本木",
+         @"男性",@"テレビ",@"フェラーリ",@"まつたけ",@"ステーキ",@"渋谷",@"表参道",@"青山一丁目",@"新宿",
+         @"東京",@"外苑前",@"後",@"性別",@"神田",@"浜松町",@"池尻大橋",@"鴬谷",@"上智",@"大学",@"ミシシッピ",@"asdfajlksdf",@"asdflkj",@"dfjdsaf",
+         nil];
+        
+        
+        NSArray *arrCombine =
+        [NSArray arrayWithObjects:
+         @"を",@"に",@"は",@"と",@"も",@"が",@"ら",@"か",@"の",@"で",@"より",@"から",@"にて",@"へ",
+         nil];
+        
+        
+        //重要文章の設定
         NSString *_strText = @"";
         if([articleData.arrImportantSentence count] > 0){
             _strText = articleData.arrImportantSentence[0];//temporary
-            for(int i = 1;i < [articleData.arrImportantSentence count];i++){
-                _strText = [NSString stringWithFormat:
-                            @"%@,%@",_strText,articleData.arrImportantSentence[i]];
-            }
-            
         }else{
-            _strText = @"temporary value : no data caz no arrImportantSentence";
+            _strText = _arrRandomWord[arc4random() % [_arrRandomWord count]];
         }
+        for(int i = 1;i < [articleData.arrImportantSentence count];i++){
+            _strText = [NSString stringWithFormat:
+                        @"%@,%@",_strText,articleData.arrImportantSentence[i]];
+        }
+        
         self.strText = _strText;
         
         
-        NSString *_strKeyword = @"";
         
+        //重要語の定義=>ブログにアップするテキストとする
+        //方法：キーワードを格助詞で連結＆要所要所(最初と途中の一部)に本文を配置
+        
+        //最初はノードが存在すればそのノードを格納、なければランダムな単語を格納
+        NSString *_strKeyword = @"";
         if([articleData.arrImportantSentence count] > 0){
             
             _strKeyword = ((Node *)articleData.arrImportantNode[0]).surface;//temporary
-            for(int i = 1;i < [articleData.arrImportantNode count];i++){
-                _strKeyword = [NSString stringWithFormat:
-                               @"%@,%@", _strKeyword,((Node *)articleData.arrImportantNode[i]).surface];
-            }
         }else{
-            _strKeyword = @"temporary value : no data caz no arrImportantNode";
+            _strKeyword = _arrRandomWord[arc4random() % [_arrRandomWord count]];
         }
+        
+        //その後に重要文章を一つだけ配置(文章が存在すれば)
+        if([articleData.arrImportantSentence count] > 0){
+            int _no = 0 ;//arc4random() % [articleData.arrImportantSentence count];
+            
+            _strKeyword = [NSString stringWithFormat:
+                           @"%@,%@",
+                           _strText,
+                           articleData.arrImportantSentence[_no]];
+            
+                           NSLog(@"aaaaaaaaaaaaaaaaaaaaaaaaaaaaa%@",
+                                 articleData.arrImportantSentence[_no]);
+        }
+        
+        //その後に重要語をランダムな順番で連結
+        for(int i = 1;i < [articleData.arrImportantNode count];i++){
+            _strKeyword = [NSString stringWithFormat:
+                           @"%@%@%@",
+                           _strKeyword,
+                           arrCombine[arc4random() % [arrCombine count]],
+                           ((Node *)articleData.arrImportantNode[i]).surface];
+        }
+        //重要語にランダムな単語を与える
+        for(int i = 0;i < 300;i ++){
+            _strKeyword = [NSString stringWithFormat:
+                           @"%@%@%@",
+                           _strKeyword,
+                           arrCombine[arc4random() % [arrCombine count]],
+                           _arrRandomWord[arc4random() % [_arrRandomWord count]]];
+        }
+        
+        
         self.strKeyword = _strKeyword;
         
         NSLog(@"strTitle=%@", self.strTitle);
@@ -96,7 +145,7 @@ UIButton *uploadButton;//ブログへアップロードする
     
     //本文
     UILabel *lblText=[[UILabel alloc]initWithFrame:CGRectMake(0, lblTitle.frame.origin.y + lblTitle.bounds.size.height,
-                                                              self.view.bounds.size.width, 400)];
+                                                              self.view.bounds.size.width, 200)];
     lblText.text = self.strText;
     lblText.textColor = [UIColor blackColor];
     lblText.backgroundColor=[UIColor colorWithRed:0 green:1.0f blue:0 alpha:0.5f];//[UIColor clearColor];
@@ -106,7 +155,7 @@ UIButton *uploadButton;//ブログへアップロードする
     
     //キーワード
     UILabel *lblKeyword=[[UILabel alloc]initWithFrame:CGRectMake(0, lblText.frame.origin.y + lblText.bounds.size.height,
-                                                              self.view.bounds.size.width, 100)];
+                                                              self.view.bounds.size.width, 300)];
     lblKeyword.text = self.strKeyword;
     lblKeyword.textColor = [UIColor blackColor];
     lblKeyword.backgroundColor=[UIColor colorWithRed:0 green:0 blue:1.0f alpha:0.5f];//[UIColor clearColor];
