@@ -7,7 +7,7 @@
 //
 
 #define DispDatabaseLog
-#define MaxRecordEveryPage 2
+#define MaxRecordEveryPage 4
 
 #import "ViewController.h"
 #import "TextViewController.h"
@@ -30,7 +30,7 @@ int noStatus;//現在の状態(どの区切りか)を判別:最初は一番左�
     self = [super init];
     NSLog(@"init");
     if(self){
-        arrArticleData = [NSMutableArray array];
+        
         
     }
     
@@ -109,19 +109,73 @@ int noStatus;//現在の状態(どの区切りか)を判別:最初は一番左�
     
     
     
+    
+    
+
+}
+
+- (void)didReceiveMemoryWarning
+{
+    [super didReceiveMemoryWarning];
+    // Dispose of any resources that can be recreated.
+    
+    
+    
+}
+
+-(void)viewWillAppear:(BOOL)animated{
+    
+    [super viewWillAppear:animated];
+    
+    
+}
+
+
+-(void)viewDidAppear:(BOOL)animated{
+    [super viewDidAppear:animated];
+    
+    //背景やコンポーネントの配置
+    
+    
+    
+    //＜未＞画面サイズに対してマージンが少しある程度のフレームを作成し、
+    //フリックで背景画像よりも少し小さめ移動させる
+    //コンポーネントの配置
+//    ArticleCell *articleView =
+//    [[ArticleCell alloc]
+//     initWithFrame:
+//     CGRectMake(10, 100, 200, 150)];
+//    
+//    articleView.translucentAlpha = 0.5f;
+////    [self.view addSubview:articleView];
+//    [backgroundView addSubview:articleView];
+    
+    
+    
+    
+    
+    //やるべきこと
+    //画面が表示されるたびにabstforblogに何も入っていないidを取得(DatabaseManage getLastIDFromDBUnder:category:)するようにしたい
+    //そのため、以下をviewDidLoadからviewDidAppearに移植した、が、そうしたら画面が黒いままになった
+    
+    //記事を表示した後、相応しくない場合はDBから削除するメニューを実装する必要！
+    
     //表示コンポーネントやデータの初期化等
     NSArray *arrTable = [NSArray arrayWithObjects:
                          [[ArticleTable alloc] initWithType:TableTypeTechnology],
-//                         [[ArticleTable alloc] initWithType:TableTypeSports],
-//                         [[ArticleTable alloc] initWithType:TableTypeArts],
-//                         [[ArticleTable alloc] initWithType:TableTypeBusiness],
-//                         [[ArticleTable alloc] initWithType:TableTypeFinance],
+                         [[ArticleTable alloc] initWithType:TableTypeSports],
+                         [[ArticleTable alloc] initWithType:TableTypeArts],
+                         [[ArticleTable alloc] initWithType:TableTypeBusiness],
+                         [[ArticleTable alloc] initWithType:TableTypeFinance],
                          nil];
     
     //記事データ格納用配列の初期化
     
     int countArticle = 0;
     int category = 0;
+    arrArticleData = [NSMutableArray array];//以下のcountArticleと格納した順番が同じになるようにする
+    
+    
     int _noID = 100000;//最後にアップデートしたIDを格納しておく
     for(int i = 0 ;i < [arrTable count];i++){//全てのテーブルに対して
         _noID = 100000;//最後にアップデートしたIDを格納しておく
@@ -169,19 +223,19 @@ int noStatus;//現在の状態(どの区切りか)を判別:最初は一番左�
             NSLog(@"strTmp = %@", strReturnBody);
             
             //http://qiita.com/yimajo/items/c9338a715016e7a812b1
-//            NSLog(@"abstforblog=%@", [dictTmp objectForKey:@"abstforblog"]);
-//            NSLog(@"ispostblog=%@", [dictTmp objectForKey:@"ispostblog"]);
-//            if([[dictTmp objectForKey:@"abstforblog"] isEqualToString:@"(null)"]){
-//                NSLog(@"string");
-//            }else if([dictTmp objectForKey:@"abstforblog"] == [NSNull null]){
-//                NSLog(@"null");
-//            }else if([[dictTmp objectForKey:@"abstforblog"] isEqualToString:@""]){
-//                NSLog(@"blank");
-//            }else if([dictTmp objectForKey:@"abstforblog"] == nil){
-//                NSLog(@"nil");
-//            }else{
-//                NSLog(@"other");
-//            }
+            //            NSLog(@"abstforblog=%@", [dictTmp objectForKey:@"abstforblog"]);
+            //            NSLog(@"ispostblog=%@", [dictTmp objectForKey:@"ispostblog"]);
+            //            if([[dictTmp objectForKey:@"abstforblog"] isEqualToString:@"(null)"]){
+            //                NSLog(@"string");
+            //            }else if([dictTmp objectForKey:@"abstforblog"] == [NSNull null]){
+            //                NSLog(@"null");
+            //            }else if([[dictTmp objectForKey:@"abstforblog"] isEqualToString:@""]){
+            //                NSLog(@"blank");
+            //            }else if([dictTmp objectForKey:@"abstforblog"] == nil){
+            //                NSLog(@"nil");
+            //            }else{
+            //                NSLog(@"other");
+            //            }
             
             
             TextAnalysis *textAnalysis = [[TextAnalysis alloc]
@@ -191,18 +245,18 @@ int noStatus;//現在の状態(どの区切りか)を判別:最初は一番左�
             NSArray *arrImportantNode = [textAnalysis getImportantNode];
             
             //要約文章結合：temporary=>本来はタイトルと最重要な要約文章のみ表示して、クリックしたら別の要約文章全体を見せるようにしたい！！！
-//            NSString *strAbstract = @"";
-//            for(int noSen = 0;noSen < MIN([arrImportantSentence count],2);noSen++){
-//                strAbstract = [NSString stringWithFormat:@"%@%@",
-//                               strAbstract, arrImportantSentence[noSen]];
-//            }
-//            
-//            NSString *strKeyward = @"";
-//            for(int noWord = 0;noWord < MIN([arrImportantNode count],4);noWord++){
-//                strKeyward = [NSString stringWithFormat:@"%@%@",
-//                              strKeyward,
-//                              ((Node *)arrImportantNode[noWord]).surface];
-//            }
+            //            NSString *strAbstract = @"";
+            //            for(int noSen = 0;noSen < MIN([arrImportantSentence count],2);noSen++){
+            //                strAbstract = [NSString stringWithFormat:@"%@%@",
+            //                               strAbstract, arrImportantSentence[noSen]];
+            //            }
+            //
+            //            NSString *strKeyward = @"";
+            //            for(int noWord = 0;noWord < MIN([arrImportantNode count],4);noWord++){
+            //                strKeyward = [NSString stringWithFormat:@"%@%@",
+            //                              strKeyward,
+            //                              ((Node *)arrImportantNode[noWord]).surface];
+            //            }
             
             ArticleData *articleData = [[ArticleData alloc]init];
             articleData.noID = _noID;
@@ -232,58 +286,26 @@ int noStatus;//現在の状態(どの区切りか)を判別:最初は一番左�
             NSLog(@"tag=%d", countArticle);
             
             //記事セルにテキストを格納
-//            articleCell.text = arrImportantSentence[j];
+            //            articleCell.text = arrImportantSentence[j];
             
             [((ArticleTable *)arrTable[i]) addCell:articleCell];
             
-//            NSLog(@"arrtable%d = %@", i, arrTable[i]);
+            //            NSLog(@"arrtable%d = %@", i, arrTable[i]);
             
             countArticle++;
         }
     }
     
+    //一時しのぎ：本来ならばテキストだけ変えるとかarticleCellのみ変えるとかすべき
+    [backgroundView removeFromSuperview];
     
     backgroundView = [[BackgroundView alloc]initWithTable:arrTable];
-}
-
-- (void)didReceiveMemoryWarning
-{
-    [super didReceiveMemoryWarning];
-    // Dispose of any resources that can be recreated.
     
-    
-    
-}
-
--(void)viewWillAppear:(BOOL)animated{
-    
-    [super viewWillAppear:animated];
     
     
     //backgroundの表示
-//    [self.view addSubview:imvBackground];
     [self.view addSubview:backgroundView];
-}
-
-
--(void)viewDidAppear:(BOOL)animated{
-    [super viewDidAppear:animated];
     
-    //背景やコンポーネントの配置
-    
-    
-    
-    //＜未＞画面サイズに対してマージンが少しある程度のフレームを作成し、
-    //フリックで背景画像よりも少し小さめ移動させる
-    //コンポーネントの配置
-//    ArticleCell *articleView =
-//    [[ArticleCell alloc]
-//     initWithFrame:
-//     CGRectMake(10, 100, 200, 150)];
-//    
-//    articleView.translucentAlpha = 0.5f;
-////    [self.view addSubview:articleView];
-//    [backgroundView addSubview:articleView];
 }
 
 

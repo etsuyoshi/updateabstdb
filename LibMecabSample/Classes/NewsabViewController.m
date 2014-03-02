@@ -625,7 +625,7 @@ foundCharacters:(NSString *)string
                                            returningResponse:&response
                                                        error:&error];
     if(error){
-        NSLog(@"同期通信失敗");
+        NSLog(@"同期通信失敗 at getValueFromDB");
         return nil;
     }else{
         NSLog(@"同期通信成功->%@", result);

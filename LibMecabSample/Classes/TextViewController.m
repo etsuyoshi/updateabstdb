@@ -38,19 +38,31 @@ UIButton *uploadButton;//ブログへアップロードする
         self.idNo = articleData.noID;
         self.strTitle = articleData.title;
         
-        
-        NSString *_strText = articleData.arrImportantSentence[0];//temporary
-        for(int i = 1;i < [articleData.arrImportantSentence count];i++){
-            _strText = [NSString stringWithFormat:
-                        @"%@,%@",_strText,articleData.arrImportantSentence[i]];
+        NSString *_strText = @"";
+        if([articleData.arrImportantSentence count] > 0){
+            _strText = articleData.arrImportantSentence[0];//temporary
+            for(int i = 1;i < [articleData.arrImportantSentence count];i++){
+                _strText = [NSString stringWithFormat:
+                            @"%@,%@",_strText,articleData.arrImportantSentence[i]];
+            }
+            
+        }else{
+            _strText = @"temporary value : no data caz no arrImportantSentence";
         }
         self.strText = _strText;
         
         
-        NSString *_strKeyword = ((Node *)articleData.arrImportantNode[0]).surface;//temporary
-        for(int i = 1;i < [articleData.arrImportantNode count];i++){
-            _strKeyword = [NSString stringWithFormat:
-                           @"%@,%@", _strKeyword,((Node *)articleData.arrImportantNode[i]).surface];
+        NSString *_strKeyword = @"";
+        
+        if([articleData.arrImportantSentence count] > 0){
+            
+            _strKeyword = ((Node *)articleData.arrImportantNode[0]).surface;//temporary
+            for(int i = 1;i < [articleData.arrImportantNode count];i++){
+                _strKeyword = [NSString stringWithFormat:
+                               @"%@,%@", _strKeyword,((Node *)articleData.arrImportantNode[i]).surface];
+            }
+        }else{
+            _strKeyword = @"temporary value : no data caz no arrImportantNode";
         }
         self.strKeyword = _strKeyword;
         
