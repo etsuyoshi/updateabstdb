@@ -97,7 +97,7 @@ UIButton *uploadButton;//ブログへアップロードする
         
         //その後に重要文章を一つだけ配置(文章が存在すれば)
         if([articleData.arrImportantSentence count] > 0){
-            int _no = 0 ;//arc4random() % [articleData.arrImportantSentence count];
+            int _no = arc4random() % [articleData.arrImportantSentence count];
             
             _strKeyword = [NSString stringWithFormat:
                            @"%@,%@",
@@ -176,7 +176,7 @@ UIButton *uploadButton;//ブログへアップロードする
     
     returnButton = [UIButton buttonWithType:UIButtonTypeCustom];
     [returnButton setBackgroundColor:[UIColor redColor]];
-    returnButton.frame = CGRectMake(10, 10, 100, 60);
+    returnButton.frame = CGRectMake(10, 10, 100, 60);//
     
     [returnButton addTarget:self
                      action:@selector(onTappedReturnButton:)
