@@ -44,15 +44,17 @@ UIButton *uploadButton;//ブログへアップロードする
          @"マシン",@"学習",@"なぜ",@"明日",@"車",@"女性",@"暴動",@"私",@"天気",@"地下鉄",@"カフェ",
          @"中学生",@"高校生",@"大学生",@"小学生",@"キーワード",@"まさか",@"傘",@"雨",@"ベンツ",@"六本木",
          @"男性",@"テレビ",@"フェラーリ",@"まつたけ",@"ステーキ",@"渋谷",@"表参道",@"青山一丁目",@"新宿",
-         @"東京",@"外苑前",@"後",@"性別",@"神田",@"浜松町",@"池尻大橋",@"鴬谷",@"上智",@"大学",@"ミシシッピ",@"asdfajlksdf",@"asdflkj",@"dfjdsaf",
+         @"東京",@"外苑前",@"後",@"性別",@"神田",@"浜松町",@"池尻大橋",@"鴬谷",@"上智",@"大学",@"ミシシッピ",
          @"連結",@"ニューロン",@"バックプロップ",@"英語",@"運動",@"遠足",@"散歩",
+         @"wifi",@"うぃふぃ",@"ウィフィ",@"ルータ",@"ルーター",@"端末",@"機械",@"装置",
+         @"モバイル",@"ポケット",@"wimax",@"biglobe",@"emobile",
          nil];
         
         
         NSArray *arrCombine =
         [NSArray arrayWithObjects:
          @"を",@"に",@"は",@"と",@"も",@"が",@"ら",@"か",@"の",@"で",@"より",@"から",@"にて",@"へ",
-         @"。",@"。",@"。",@"。",@"。",@"。",@"、",@"、",@"、",@"、",@"、",@"、",//なるべく句読点を入れて上げる
+         @"。",@"。",@"。",@"。",@"、",@"、",@"、",@"、",//なるべく多くの句読点を入れる
          nil];
         
         
@@ -75,20 +77,23 @@ UIButton *uploadButton;//ブログへアップロードする
         //重要語の定義=>ブログにアップするテキストとする
         //方法：キーワードを格助詞で連結＆要所要所(最初と途中の一部)に本文を配置
         
-        //最初はノードが存在すればそのノードを格納、なければランダムな単語を格納
+        //最初は文章が存在すればその文章を格納、なければランダムな単語を格納
         NSString *_strKeyword = @"";
         if([articleData.arrImportantSentence count] > 0){
             
-            _strKeyword = ((Node *)articleData.arrImportantNode[0]).surface;//temporary
+            _strKeyword = articleData.arrImportantSentence[0];//temporary
         }else{
             _strKeyword = _arrRandomWord[arc4random() % [_arrRandomWord count]];
         }
+        
+        
         
         //被リンクを張る
         _strKeyword = [NSString stringWithFormat:
                        @"%@%@",
                        _strKeyword,
-                       @"http://xn--wifi-to4c3j9d.jp/<BR>"];
+                       //<a href="
+                       @"<BR><a href=\"http://xn--wifi-to4c3j9d.jp\">wifiルータ.jp</a><BR>"];
         
         //その後に重要文章を一つだけ配置(文章が存在すれば)
         if([articleData.arrImportantSentence count] > 0){

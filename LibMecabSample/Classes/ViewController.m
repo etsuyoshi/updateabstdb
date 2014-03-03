@@ -163,10 +163,10 @@ int noStatus;//現在の状態(どの区切りか)を判別:最初は一番左�
     //表示コンポーネントやデータの初期化等
     NSArray *arrTable = [NSArray arrayWithObjects:
                          [[ArticleTable alloc] initWithType:TableTypeTechnology],
-                         [[ArticleTable alloc] initWithType:TableTypeSports],
-                         [[ArticleTable alloc] initWithType:TableTypeArts],
-                         [[ArticleTable alloc] initWithType:TableTypeBusiness],
-                         [[ArticleTable alloc] initWithType:TableTypeFinance],
+//                         [[ArticleTable alloc] initWithType:TableTypeSports],
+//                         [[ArticleTable alloc] initWithType:TableTypeArts],
+//                         [[ArticleTable alloc] initWithType:TableTypeBusiness],
+//                         [[ArticleTable alloc] initWithType:TableTypeFinance],
                          nil];
     
     //記事データ格納用配列の初期化
@@ -193,7 +193,7 @@ int noStatus;//現在の状態(どの区切りか)を判別:最初は一番左�
         
         
         //レコード数が存在していればループが回る:現在カテゴリにおける記事数と最大記事数の小さい方
-        int numArticleInCategory = 5;//iによって動的に取得出来るようにする：未実装
+        int numArticleInCategory = 1;//iによって動的に取得出来るようにする：未実装
         for(int j = 0;j < MIN(numArticleInCategory, MaxRecordEveryPage);j++){//各テーブルにセルを配置
             
             
