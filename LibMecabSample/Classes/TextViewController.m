@@ -147,7 +147,7 @@ UIButton *uploadButton;//ブログへアップロードする
     
     
     //タイトル
-    UILabel *lblTitle = [[UILabel alloc]initWithFrame:CGRectMake(0, 50, self.view.bounds.size.width, 50)];
+    UILabel *lblTitle = [[UILabel alloc]initWithFrame:CGRectMake(0, 90, self.view.bounds.size.width, 50)];
     lblTitle.text = self.strTitle;
     lblTitle.textColor = [UIColor blackColor];
     lblTitle.backgroundColor = [UIColor colorWithRed:1.0 green:0 blue:0 alpha:.5f];
@@ -170,13 +170,13 @@ UIButton *uploadButton;//ブログへアップロードする
     lblKeyword.text = self.strKeyword;
     lblKeyword.textColor = [UIColor blackColor];
     lblKeyword.backgroundColor=[UIColor colorWithRed:0 green:0 blue:1.0f alpha:0.5f];//[UIColor clearColor];
-    lblKeyword.numberOfLines = 3;
+    lblKeyword.numberOfLines = 0;
     [self.view addSubview:lblKeyword];
     
     
     returnButton = [UIButton buttonWithType:UIButtonTypeCustom];
     [returnButton setBackgroundColor:[UIColor redColor]];
-    returnButton.frame = CGRectMake(10, 10, 100, 40);
+    returnButton.frame = CGRectMake(10, 10, 100, 60);
     
     [returnButton addTarget:self
                      action:@selector(onTappedReturnButton:)
@@ -187,7 +187,7 @@ UIButton *uploadButton;//ブログへアップロードする
     
     uploadButton = [UIButton buttonWithType:UIButtonTypeCustom];
     [uploadButton setBackgroundColor:[UIColor blueColor]];
-    uploadButton.frame = CGRectMake(250, 10, 100, 40);
+    uploadButton.frame = CGRectMake(250, 10, 100, 60);
     
     [uploadButton addTarget:self
                      action:@selector(onTappedUploadButton:)
