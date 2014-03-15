@@ -66,6 +66,9 @@ NSMutableArray *arrImportantNode;//重要語句(Node形式)
         //タイトル初期化
         strTitle = _strTitle;
         
+        
+        //テスト用
+        
         //トークン初期化
         arrStrToken =
         [NSMutableArray arrayWithObjects:
@@ -139,38 +142,64 @@ NSMutableArray *arrImportantNode;//重要語句(Node形式)
 
         //重複なしの単語の格納:出現頻度順に並べ替え済
         //ex.arrArg５番目が3番目の大きさならarrInd[2(=1の次)]=5)
-        NSMutableArray *arrTmp =
-        [self getArrayInOrder:(NSMutableArray *)arrScoreNounTmp
-                        numOf:[arrScoreNounTmp count]];
-//        for(int i = 0;i < [arrTmp count];i++){
-//            NSLog(@"arrtmp%d is %@", i, arrTmp[i]);
+//        NSMutableArray *arrTmp =
+//        [self getArrayInOrder:(NSMutableArray *)arrScoreNounTmp
+//                        numOf:[arrScoreNounTmp count]];
+////        for(int i = 0;i < [arrTmp count];i++){
+////            NSLog(@"arrtmp%d is %@", i, arrTmp[i]);
+////        }
+//        
+////        NSLog(@"arrtmp count=%d, arrscoreNounTmp=%d",
+////              [arrTmp count], [arrScoreNounTmp count]);
+//        
+//        //初期化：降順(多い順)に格納する配列
+//        arrScoreNoun = [NSMutableArray array];//スコア配列
+//        arrNounUnique = [NSMutableArray array];//格納するユニーク名詞配列
+//        for(int i =0;i < MIN([arrNounUniqueTmp count], [arrTmp count]);i++){
+//            //ユニークかつ降順に名詞のみをNode型として配列作成
+//            [arrNounUnique
+//             addObject:
+//             arrNounUniqueTmp[[arrTmp[i] integerValue]]
+//             ];
+//            
+//            //スコア配列が降順(大きい順番)になっているか確認するため
+//            [arrScoreNoun
+//            addObject:
+//            arrScoreNounTmp[[arrTmp[i] integerValue]]
+//             ];
+//            
+//            //単語と出現頻度
+////            NSLog(@"arrNou=%@, num=%d",
+////                  ((Node *)arrNounUnique[i]).surface,
+////                  [((NSString *)arrScoreNoun[i]) integerValue]);
 //        }
-        
-//        NSLog(@"arrtmp count=%d, arrscoreNounTmp=%d",
-//              [arrTmp count], [arrScoreNounTmp count]);
-        
-        //初期化：降順(多い順)に格納する配列
-        arrScoreNoun = [NSMutableArray array];//スコア配列
-        arrNounUnique = [NSMutableArray array];//格納するユニーク名詞配列
-        for(int i =0;i < MIN([arrNounUniqueTmp count], [arrTmp count]);i++){
-            //ユニークかつ降順に名詞のみをNode型として配列作成
-            [arrNounUnique
-             addObject:
-             arrNounUniqueTmp[[arrTmp[i] integerValue]]
-             ];
-            
-            //スコア配列が降順(大きい順番)になっているか確認するため
-            [arrScoreNoun
-            addObject:
-            arrScoreNounTmp[[arrTmp[i] integerValue]]
-             ];
-            
-            //単語と出現頻度
-//            NSLog(@"arrNou=%@, num=%d",
-//                  ((Node *)arrNounUnique[i]).surface,
-//                  [((NSString *)arrScoreNoun[i]) integerValue]);
-        }
 //        NSLog(@"重複チェック");
+        
+        
+        //テスト用
+//        NSLog(@"加点終了");
+//        
+//        NSLog(@"並べ替え開始");
+//        
+//        for(int i = 0;i < [arrNounUniqueTmp count];i++){
+//            NSLog(@"sentence%d(%d)=%@", i, [arrScoreNounTmp[i] integerValue], ((Node *)arrNounUniqueTmp[i]).surface);
+//        }
+
+        
+        //名詞配列をarrScoreによる降順に
+        arrNounUnique = [self getOrderedArrayFor:arrNounUniqueTmp
+                                       withScore:arrScoreNounTmp];
+        
+        //scoreを降順に
+        arrScoreNoun = [self getOrderedArrayFor:arrScoreNounTmp
+                                      withScore:arrScoreNounTmp];
+        
+        
+//        NSLog(@"並べ替え完了");
+//        for(int i = 0;i < [arrNounUniqueTmp count];i++){
+//            NSLog(@"sentence%d(%d)=%@", i, [arrScoreNoun[i] integerValue], ((Node *)arrNounUnique[i]).surface);
+//        }
+
         
         //重複チェック
         for(int i =0;i < [arrNounUnique count]-1;i++){
@@ -840,6 +869,32 @@ NSMutableArray *arrImportantNode;//重要語句(Node形式)
     
     //文章、及びキーワードへの加点終了
     
+    //テスト用出力
+//    NSLog(@"加点終了");
+//    
+//    NSLog(@"並べ替え開始");
+//    
+//    for(int i = 0;i < [_arrScoreSentence count];i++){
+//        NSLog(@"sentence%d(%d)=%@", i, [_arrScoreSentence[i] integerValue], arrSentence[i]);
+//    }
+    
+    
+    //arrSentenceをスコアで並べ替え
+    arrSentence = [self getOrderedArrayFor:arrSentence
+                                 withScore:_arrScoreSentence];
+    //スコアを自分自身で降順に並べ替え
+    _arrScoreSentence = [self getOrderedArrayFor:_arrScoreSentence
+                                       withScore:_arrScoreSentence];
+    
+    
+//    NSLog(@"並べ替え完了");
+//    for(int i = 0;i < [_arrScoreSentence count];i++){
+//        NSLog(@"sentence%d(%d)=%@", i, [_arrScoreSentence[i] integerValue], arrSentence[i]);
+//    }
+    
+    
+    
+    //閾値で下位スコアを切り捨て
     int threasholdForSentence = 5;
     int threasholdForNode = 2;
     
@@ -1014,6 +1069,37 @@ NSMutableArray *arrImportantNode;//重要語句(Node形式)
 }
 
 
+
+/*
+ *前提：arrContentsに対応するスコアがarrScoreに格納されている
+ *機能：arrScoreの降順(大きい順)にarrContensを並べ替えて返す
+ */
+-(NSMutableArray *)getOrderedArrayFor:(NSArray *)arrContents
+                     withScore:(NSArray *)_arrScore{
+    
+    NSMutableArray *_arrReturn = [NSMutableArray array];
+    
+    NSMutableArray *arrTmp =
+    [self getArrayInOrder:(NSMutableArray *)_arrScore
+                    numOf:[_arrScore count]];
+    //        for(int i = 0;i < [arrTmp count];i++){
+    //            NSLog(@"arrtmp%d is %@", i, arrTmp[i]);
+    //        }
+    
+    //        NSLog(@"arrtmp count=%d, arrscoreNounTmp=%d",
+    //              [arrTmp count], [arrScoreNounTmp count]);
+    
+    for(int i =0;i < MIN([arrContents count], [arrTmp count]);i++){
+        //ユニークかつ降順に名詞のみをNode型として配列作成
+        [_arrReturn
+         addObject:
+         arrContents[[arrTmp[i] integerValue]]
+         ];
+    }
+    
+    //並べ替えられた配列を返す
+    return _arrReturn;
+}
 
 
 @end

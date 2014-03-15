@@ -6,8 +6,13 @@
 //  Copyright (c) 2014年 endo.news. All rights reserved.
 //
 
+#define ABSTRACTION_TEST
+
 #define DispDatabaseLog
 #define MaxRecordEveryPage 4
+
+
+
 
 #import "ViewController.h"
 #import "TextViewController.h"
@@ -134,25 +139,44 @@ int noStatus;//現在の状態(どの区切りか)を判別:最初は一番左�
 -(void)viewDidAppear:(BOOL)animated{
     [super viewDidAppear:animated];
     
-    //背景やコンポーネントの配置
+#ifdef ABSTRACTION_TEST
+    
+    //test用データによる要約テスト:id=8029でチェック
     
     
+    //dbからデータ取得(id=8029)
+    int _noID = 8029;
     
-    //＜未＞画面サイズに対してマージンが少しある程度のフレームを作成し、
-    //フリックで背景画像よりも少し小さめ移動させる
-    //コンポーネントの配置
-//    ArticleCell *articleView =
-//    [[ArticleCell alloc]
-//     initWithFrame:
-//     CGRectMake(10, 100, 200, 150)];
-//    
-//    articleView.translucentAlpha = 0.5f;
-////    [self.view addSubview:articleView];
-//    [backgroundView addSubview:articleView];
+    NSDictionary *dictTmp = [DatabaseManage getRecordFromDBAt:_noID];
+    NSString *strReturnBody = [dictTmp objectForKey:@"body"];
+    NSString *strTitle = [dictTmp objectForKey:@"title"];
+    _noID = [[dictTmp objectForKey:@"id"] integerValue];
+    NSLog(@"strTmp = %@", strReturnBody);
     
-    
+    //テストデータ格納
+//    NSString *strReturnBody = @"aaa";
+//    NSString *strTitle = @"title";
     
     
+    TextAnalysis *textAnalysis = [[TextAnalysis alloc]
+                                  initWithText:strReturnBody
+                                  withTitle:strTitle];
+    NSArray *arrImportantSentence = [textAnalysis getImportantSentence];
+    NSArray *arrImportantNode = [textAnalysis getImportantNode];
+    
+    
+    for(int i = 0;i < [arrImportantNode count];i++){
+        NSLog(@"arrImpNode[%d]=%@", i, arrImportantNode[i]);
+    }
+    
+    
+    for(int i = 0 ;i < [arrImportantSentence count];i++){
+        NSLog(@"arrImpSntc[%d]=%@", i, arrImportantSentence[i]);
+    }
+    
+    NSLog(@"exit");
+    
+#else
     
     //やるべきこと
     //画面が表示されるたびにabstforblogに何も入っていないidを取得(DatabaseManage getLastIDFromDBUnder:category:)するようにしたい
@@ -177,7 +201,7 @@ int noStatus;//現在の状態(どの区切りか)を判別:最初は一番左�
     
     
     int _noID = 100000;//最後にアップデートしたIDを格納しておく
-    for(int i = 0 ;i < [arrTable count];i++){//全てのテーブルに対して
+    for(int i = 0 ;i < [arrTable count];i++){//全てのテーブル(画面)に対して
         _noID = 100000;//最後にアップデートしたIDを格納しておく
         //カテゴリ番号を取得する：ユーザーによって並べ替えられている
         category = i;//i番目ページに対応するカテゴリを取得するように改良すべき(ユーザーによって並べ替えられている)
@@ -306,6 +330,11 @@ int noStatus;//現在の状態(どの区切りか)を判別:最初は一番左�
     //backgroundの表示
     [self.view addSubview:backgroundView];
     
+    
+    //要約文チェック(テスト)モードなら自動更新せずに記事セルをタップして実行させるビューを連続して自動で実行させる
+    [self dispNextViewController:0];
+#endif//#IFNDEF ABSTRACTION_TEST
+    
 }
 
 
@@ -320,14 +349,15 @@ int noStatus;//現在の状態(どの区切りか)を判別:最初は一番左�
 //    articleData.text = @"text";
 //    articleData.title = @"title";
     
-    
+    [self dispNextViewController:noTapped];
+}
+
+-(void)dispNextViewController:(int)noTapped{
     TextViewController *tvcon =
     [[TextViewController alloc]
      initWithArticle:(ArticleData *)arrArticleData[noTapped]];
     [self presentViewController:tvcon animated:NO completion:nil];
 }
-
-
 
 
 -(void)getDataFromDB{
