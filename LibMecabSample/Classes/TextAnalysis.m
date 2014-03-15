@@ -457,6 +457,70 @@ NSMutableArray *arrImportantNode;//重要語句(Node形式)
     Node *node;
     NSString *strForAppend = @"";//連結用文字列
     int numOfAppend = 0;//連結した文字の個数(連結していない状態をゼロ)
+    
+    
+    //全てのノードに対してサーチ
+    
+    //サーチ対象のノードをstring型に変更してstrForAppendに格納
+    
+    //数字(：名詞)の場合はその後に品詞を調べて数字かどうか調査
+    //＝＞数字である場合は連結してstrForAppendに格納
+    //。。。繰り返す
+    
+    //その後に続くのが接尾語である場合は直前の名詞(かどうか判定)を連結
+    
+    for(int i = 0;i < [arrNodes count];i++){//次の単語を探すのは連結した単語の数に応じて。
+        node = arrNodes[i];
+        
+        strForAppend = node.surface;
+        
+        
+        if([node.features[0] isEqualToString:@"名詞"]){
+            //格納済のその後の名詞を探索していく
+            for(int j = 1;i+j < [arrNodes count];j++){//iが最後ならこのループは実行されない
+                Node *nodeNext = arrNodes[i+j];
+                //今の数字が数字でその後も数字ならば連結
+                if([node.features[1] isEqualToString:@"数"]){//今の単語が数字で
+                    if([nodeNext.features[1] isEqualToString:@"数"]){//次の単語も数字である場合
+                        strForAppend = [NSString stringWithFormat:@"%@%@",
+                                        strForAppend,nodeNext.surface];
+                        
+                        i++;
+                    }
+                }
+                
+                //次の単語の品詞が接尾語である場合は連結
+                if([nodeNext.features[1] isEqualToString:@"接尾"]){
+                    strForAppend = [NSString stringWithFormat:@"%@%@",
+                                    strForAppend,nodeNext.surface];
+                    
+                    i++;
+                }
+                
+                //次の単語の品詞が数字でも接尾語でもない場合は終了break;
+                if(!(
+                     [nodeNext.features[1] isEqualToString:@"接尾"] ||
+                     [nodeNext.features[1] isEqualToString:@"数"]
+                     )){
+                    
+                    break;//for-j
+                }
+                
+            }
+        }
+    }
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    ////////
     for(int i =0;i < [arrNodes count];i++){//全ての単語に対してサーチ
         numOfAppend = 0;
         node = arrNodes[i];
@@ -604,6 +668,17 @@ NSMutableArray *arrImportantNode;//重要語句(Node形式)
             }
         }//if-名詞
     }//for-i
+    
+    
+    
+    
+    
+    
+    
+    ///////////////
+    
+    
+    
     
     return arrReturn;
 }
