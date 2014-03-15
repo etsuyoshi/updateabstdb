@@ -166,7 +166,7 @@ int noStatus;//現在の状態(どの区切りか)を判別:最初は一番左�
     
     
     for(int i = 0;i < [arrImportantNode count];i++){
-        NSLog(@"arrImpNode[%d]=%@", i, arrImportantNode[i]);
+        NSLog(@"arrImpNode[%d]=%@", i, ((Node *)arrImportantNode[i]).surface);
     }
     
     

@@ -433,7 +433,23 @@ NSMutableArray *arrImportantNode;//重要語句(Node形式)
     return arrNodes;
 }
 
-
+/*
+ *引数のstringをnodeに変更
+ *以下の条件で名詞のみをノード型のまま配列に格納して返す
+ *まず接尾語である場合はその前の単語に連結する※
+ *「非自立」名詞は無視
+ *「数」名詞である場合は、その後に数字が続く場合は連結
+ *
+ 
+ *エラー
+ *数字の後の数字が連結されていない
+ *文末に接尾語がある場合、直前の名詞に連結されていない
+ 
+ 
+ *(参考)node特性
+ *node.features:ノードの特性を配列で取得
+ *node.partOfSpeech:ノードの第一品詞をstring型で取得
+ */
 -(NSMutableArray *)getNodeOnlyNoun:(NSString *)string{
     
     NSMutableArray *arrReturn = [NSMutableArray array];
@@ -441,16 +457,23 @@ NSMutableArray *arrImportantNode;//重要語句(Node形式)
     Node *node;
     NSString *strForAppend = @"";//連結用文字列
     int numOfAppend = 0;//連結した文字の個数(連結していない状態をゼロ)
-    for(int i =0;i < [arrNodes count];i++){
+    for(int i =0;i < [arrNodes count];i++){//全ての単語に対してサーチ
         numOfAppend = 0;
         node = arrNodes[i];
-        if([[node.features objectAtIndex:1] isEqualToString:@"非自立"]){
+        
+        //test
+        NSLog(@"%@ : %@(%@,%@,%@,%@)",
+              node.surface, node.partOfSpeech, node.features[0], node.features[1], node.features[2],node.features[3]);
+        //test
+        
+        
+        if([[node.features objectAtIndex:1] isEqualToString:@"非自立"]){//品詞第二分類が非自立の場合(必然的に第一分類は名詞である)
             //こと、ため、の(名詞格)は非自立の名詞であるが、arrNounとしては不要
             continue;
         }else if([node.partOfSpeech isEqualToString:@"名詞"]){
             
             
-            //数字である場合
+            //数字である場合(次に等価：if[[node.features objectAtIndex:1] isEqualToString:@"数"]){)
             if([self isInArrayAt:arrNumber value:node.surface]){//数字であるかどうか確認する
                 for(int j = 0;j < [arrNumber count];j++){//数字配列の全てを検索する
                     if([node.surface isEqualToString:arrNumber[j]]){//数字を特定する
@@ -532,7 +555,7 @@ NSMutableArray *arrImportantNode;//重要語句(Node形式)
 //                              ((Node *)nodeTmp).surface,
 //                              [((Node *)nodeTmp).features objectAtIndex:1]);
                         
-                        //if:ターゲット(固有名詞)の後に接尾辞の出現
+                        //if:ターゲット(固有名詞)の後に接尾辞の出現＝＞全ての品詞の後に続く接尾語は連結する必要がある
                         
                         if([[nodeTmp.features objectAtIndex:1] isEqualToString:@"接尾"]){
 //                        if([[((Node *)arrNodes[i+1]).features objectAtIndex:1] isEqualToString:@"接尾"]){
@@ -895,8 +918,8 @@ NSMutableArray *arrImportantNode;//重要語句(Node形式)
     
     
     //閾値で下位スコアを切り捨て
-    int threasholdForSentence = 5;
-    int threasholdForNode = 2;
+    int threasholdForSentence = 0;//5;
+    int threasholdForNode = 0;//2;
     
     arrImportantSentence = [NSMutableArray array];
     arrImportantNode = [NSMutableArray array];
