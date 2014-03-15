@@ -34,8 +34,10 @@ NSMutableArray *arrTFIDF;
 //最も重要な以下２配列
 NSMutableArray *arrNounUnique;//名詞(ユニークかつ出現頻度順番):Node型
 NSMutableArray *arrScoreNoun;//名詞の出現回数
-NSMutableArray *arrImportantSentence;//重要文格納配列
+
 NSMutableArray *arrImportantNode;//重要語句(Node形式)
+NSMutableArray *arrImportantSentence;//重要文格納配列
+NSMutableArray *arrAbstractSentence;
 
 //selfフィールドにしても(selfが初期化されていないので)init内で初期化できずtextAnalysis.arrImportantNode等のような形で呼べない
 //@synthesize arrImportantSentence;
@@ -538,26 +540,13 @@ NSMutableArray *arrImportantNode;//重要語句(Node形式)
                     break;//次の単語を探査せずに格納する
                 }
                 
-                //try：純粋に名詞が続く場合でも連結した方が良い？：氏名が連結される場合等(一般、固有名詞)
-//                if([nodeNext.features[0] isEqualToString:@"名詞"]){
-//                    strForAppend = [NSString stringWithFormat:@"%@%@",
-//                                    strForAppend, nodeNext.surface];
-//                    i++;
-//                    
-//                    continue;
-//                }
-                //try complete
-                
-                
-                
-                
                 //上記サブifの全てに当てはまらない場合はbreak;
                 break;//for-j
                 
             }//for-j
             
             
-            NSLog(@"arrReturnに『%@(%@)』を追加", strForAppend, node.features[1]);
+//            NSLog(@"arrReturnに『%@(%@)』を追加", strForAppend, node.features[1]);
             Node *oldNode = node;
             Node *newNode = [Node new];
             newNode.surface = strForAppend;
@@ -731,13 +720,13 @@ NSMutableArray *arrImportantNode;//重要語句(Node形式)
     
     
     
-    
+    return arrReturn;
     ///////////////
     
     
     
     
-    return arrReturn;
+    
         
         
         
@@ -1057,8 +1046,11 @@ NSMutableArray *arrImportantNode;//重要語句(Node形式)
     int threasholdForSentence = 0;//5;
     int threasholdForNode = 0;//2;
     
-    arrImportantSentence = [NSMutableArray array];
+    
     arrImportantNode = [NSMutableArray array];
+    arrImportantSentence = [NSMutableArray array];
+    arrAbstractSentence = [NSMutableArray array];
+    
     NSLog(@"重要文章の表示:%d点以上", threasholdForSentence);
     for(int i = 0;i < [arrSentence count];i++){
         if([_arrScoreSentence[i] integerValue] >= threasholdForSentence){
@@ -1070,6 +1062,14 @@ NSMutableArray *arrImportantNode;//重要語句(Node形式)
             //重要文章の格納:順番通りになっていないが、必ずしも上位語句では順位自体が重要とは限らない
             [arrImportantSentence
              addObject:arrSentence[i]];
+            
+            
+            
+            
+            //文章から要約文を生成してarrAbstractSentenceに格納
+            [arrAbstractSentence
+             addObject:[self createAbstract:arrSentence[i]]];
+            
         }
     }
     
@@ -1093,6 +1093,133 @@ NSMutableArray *arrImportantNode;//重要語句(Node形式)
     }
     
     NSLog(@"complete setting important sentence & node");
+    
+}
+
+-(NSString *)createAbstract:(NSString *)strOrigin{
+    
+    
+    
+    
+    @autoreleasepool {
+        NSString *strAbst = @"";
+        
+        
+        
+        NSMutableArray *arrReturn = [NSMutableArray array];
+        NSArray *arrNodes = [self getNode:strOrigin];
+        Node *node;
+        NSString *strForAppend = @"";//連結用文字列
+        
+        
+        
+        //全てのノードに対してサーチ
+        
+        //サーチ対象のノードをstring型に変更してstrForAppendに格納
+        
+        //数字(：名詞)の場合はその後に品詞を調べて数字かどうか調査
+        //＝＞数字である場合は連結してstrForAppendに格納
+        //。。。繰り返す
+        
+        //その後に続くのが接尾語である場合は直前の名詞(かどうか判定)を連結
+        
+        
+        
+        
+        
+        for(int i = 0;i < [arrNodes count];i++){//次の単語を探すのは連結した単語の数に応じて。
+            node = arrNodes[i];
+            //非自立語の場合はスルー
+            if([node.features[1] isEqualToString:@"非自立"]){
+                continue;
+            }
+            
+            strForAppend = node.surface;
+            
+            int original_i = i;
+            if([node.features[0] isEqualToString:@"名詞"]){
+                //格納済のその後の名詞を探索していく
+                for(int j = 1;i+j < [arrNodes count];j++){//iが最後ならこのループは実行されない
+                    Node *nodeNext = arrNodes[original_i + j];
+                    
+                    //test
+                    //                NSLog(@"now:%@(%@) next:%@(%@)",
+                    //                      strForAppend,node.features[1],
+                    //                      nodeNext.surface, nodeNext.features[1]);
+                    
+                    //今の数字が数字でその後も数字ならば連結
+                    if([node.features[1] isEqualToString:@"数"]){//今の単語が数字で
+                        //                    NSLog(@"次の品詞は数字");
+                        if([nodeNext.features[1] isEqualToString:@"数"]){//次の単語も数字である場合
+                            strForAppend = [NSString stringWithFormat:@"%@%@",
+                                            strForAppend,nodeNext.surface];
+                            
+                            i++;
+                            continue;//次の単語j+1の探査へ
+                        }
+                    }
+                    
+                    
+                    //今の名詞が一般名詞もしくは固有名詞で、次の一般もしくは固有名詞の場合は連結
+                    if([node.features[1] isEqualToString:@"一般"]||
+                       [node.features[1] isEqualToString:@"固有名詞"]
+                       ){//今の単語が一般名詞、もしくは固有名詞の場合
+                        
+                        //                    NSLog(@"次の品詞は一般、固有名詞");
+                        if([nodeNext.features[1] isEqualToString:@"一般"]||
+                           [nodeNext.features[1] isEqualToString:@"固有名詞"]
+                           ){//次の単語も一般名詞か固有名詞の場合
+                            strForAppend = [NSString stringWithFormat:@"%@%@",
+                                            strForAppend,nodeNext.surface];
+                            
+                            i++;
+                            continue;//次の単語j+1の探査へ
+                        }
+                    }
+                    
+                    
+                    //次の単語の品詞が接尾語である場合は連結
+                    if([nodeNext.features[1] isEqualToString:@"接尾"]){
+                        //                    NSLog(@"次の品詞は接続詞");
+                        strForAppend = [NSString stringWithFormat:@"%@%@",
+                                        strForAppend,nodeNext.surface];
+                        
+                        i++;
+                        //                    continue;//次の単語j+1の探査へ
+                        break;//次の単語を探査せずに格納する
+                    }
+                    
+                    //上記サブifの全てに当てはまらない場合はbreak;
+                    break;//for-j
+                    
+                }//for-j
+                
+                
+                //            NSLog(@"arrReturnに『%@(%@)』を追加", strForAppend, node.features[1]);
+                Node *oldNode = node;
+                Node *newNode = [Node new];
+                newNode.surface = strForAppend;
+                newNode.feature = oldNode.feature;//格納の仕方がよくわからないので連結された中の最後のnodeのfeatureを格納
+                [arrReturn addObject:newNode];
+                strForAppend = @"";//初期化
+            }//if-noun
+        }//for-i
+        
+        
+        
+        
+        
+        return strAbst;
+        
+        
+    }
+    
+    
+    
+    
+    
+    
+    
     
 }
 
