@@ -10,6 +10,7 @@
 #import <Foundation/Foundation.h>
 #import "Node.h"
 #import "Mecab.h"
+#import "TermObject.h"
 
 @interface TextAnalysis : NSObject
 //@property (nonatomic, copy) NSMutableArray *arrImportantSentence;//重要文格納配列

@@ -459,295 +459,142 @@ NSMutableArray *arrAllTokenNode;//重要語句、副詞、助詞、形容詞、�
  
  
  
- *createAbstメソッド内において人名や地名、時間データを取得する必要ー＞氏名や日付など、トークンを連結する必要がある：[self getNodeOnlyNoun]と同じことを二回やる必要ないのでそこでarrAllTermを生成することにする
+ *createAbstメソッド内において人名や地名、時間データを取得する必要ー＞氏名や日付など、トークンを連結する必要がある：[self getNodeOnlyNoun]と同じことを二回やる必要ないのでそこでarrAllTermに単語を連結することにする
  
  
  */
 -(NSMutableArray *)getNodeOnlyNoun:(NSString *)string{
-    @autoreleasepool {
-        //autoreleasepoolをしているので外部データの格納はできない?
-        arrAllTokenNode = [NSMutableArray array];
+    @autoreleasepool {//この中で生成した変数については制御がメソッドの外に移ると削除される:arrAllTokenについては既に外で定義されているので削除されない
         
-        
-        
-    NSMutableArray *arrReturn = [NSMutableArray array];
-    NSArray *arrNodes = [self getNode:string];
-    Node *node;
-    NSString *strForAppend = @"";//連結用文字列
-    int numOfAppend = 0;//連結した文字の個数(連結していない状態をゼロ)
-    
-    
-    //全てのノードに対してサーチ
-    
-    //サーチ対象のノードをstring型に変更してstrForAppendに格納
-    
-    //数字(：名詞)の場合はその後に品詞を調べて数字かどうか調査
-    //＝＞数字である場合は連結してstrForAppendに格納
-    //。。。繰り返す
-    
-    //その後に続くのが接尾語である場合は直前の名詞(かどうか判定)を連結
-    
     
         
         
+        NSMutableArray *arrReturn = [NSMutableArray array];
+        NSArray *arrNodes = [self getNode:string];
+        Node *node;
+        NSString *strForAppend = @"";//連結用文字列
         
-    for(int i = 0;i < [arrNodes count];i++){//次の単語を探すのは連結した単語の数に応じて。
-        node = arrNodes[i];
-        //非自立語の場合はスルー
-        if([node.features[1] isEqualToString:@"非自立"]){
-            continue;
-        }
         
-        strForAppend = node.surface;
+        //全てのノードに対してサーチ
         
-        int original_i = i;
-        if([node.features[0] isEqualToString:@"名詞"]){
+        //サーチ対象のノードをstring型に変更してstrForAppendに格納
+        
+        //数字(：名詞)の場合はその後に品詞を調べて数字かどうか調査
+        //＝＞数字である場合は連結してstrForAppendに格納
+        //。。。繰り返す
+        
+        //その後に続くのが接尾語である場合は直前の名詞(かどうか判定)を連結
+        
+            
+            
+            
+        for(int i = 0;i < [arrNodes count];i++){//次の単語を探すのは連結した単語の数に応じて。
+            node = arrNodes[i];
+            
+            
+            TermObject *termObject = [[TermObject alloc]init];
+            [termObject setNode:node];
+            
+            strForAppend = node.surface;
+            
+            int original_i = i;
+            Node *newNode = node;//[Node new];
+            if([node.features[0] isEqualToString:@"名詞"]){
 
-            //格納済のその後の名詞を探索していく
-            for(int j = 1;i+j < [arrNodes count];j++){//iが最後ならこのループは実行されない
-                Node *nodeNext = arrNodes[original_i + j];
-                
-                //test
-                NSLog(@"now:%@(%@) next:%@(%@)",
-                      strForAppend,node.features[1],
-                      nodeNext.surface, nodeNext.features[1]);
-                
-                //今の数字が数字でその後も数字ならば連結
-                if([node.features[1] isEqualToString:@"数"]){//今の単語が数字で
-//                    NSLog(@"次の品詞は数字");
-                    if([nodeNext.features[1] isEqualToString:@"数"]){//次の単語も数字である場合
-                        strForAppend = [NSString stringWithFormat:@"%@%@",
-                                        strForAppend,nodeNext.surface];
-                        
-                        i++;
-                        continue;//次の単語j+1の探査へ
-                    }
-                }
-                
-                
-                //今の名詞が一般名詞、固有名詞、サ変接続、形容動詞語幹で、次の同じような名詞の場合は連結(住民投票、投資行動)
-                if([node.features[1] isEqualToString:@"一般"]||
-                   [node.features[1] isEqualToString:@"固有名詞"]||
-                   [node.features[1] isEqualToString:@"サ変接続"]||
-                   [node.features[1] isEqualToString:@"形容動詞語幹"]
-                   ){//今の単語が一般名詞、もしくは固有名詞の場合
+                //格納済のその後の名詞を探索していく
+                for(int j = 1;i+j < [arrNodes count];j++){//iが最後ならこのループは実行されない
+                    Node *nodeNext = arrNodes[original_i + j];
                     
-                    if([nodeNext.features[1] isEqualToString:@"一般"]||
-                       [nodeNext.features[1] isEqualToString:@"固有名詞"]||
-                       [nodeNext.features[1] isEqualToString:@"サ変接続"]||
-                       [nodeNext.features[1] isEqualToString:@"形容動詞語幹"]
-                       ){//次の単語も一般名詞か固有名詞の場合
-                        strForAppend = [NSString stringWithFormat:@"%@%@",
-                                        strForAppend,nodeNext.surface];
-                        
-                        i++;
-                        continue;//次の単語j+1の探査へ
-                    }
-                }
-                
-                
-                //次の単語の品詞が接尾語である場合は連結
-                if([nodeNext.features[1] isEqualToString:@"接尾"]){
-//                    NSLog(@"次の品詞は接続詞");
-                    strForAppend = [NSString stringWithFormat:@"%@%@",
-                                    strForAppend,nodeNext.surface];
+                    //test
+                    NSLog(@"now:%@(%@) next:%@(%@)",
+                          strForAppend,node.features[1],
+                          nodeNext.surface, nodeNext.features[1]);
                     
-                    i++;
-//                    continue;//次の単語j+1の探査へ
-                    break;//次の単語を探査せずに格納する
-                }
-                
-                //上記サブifの全てに当てはまらない場合はbreak;
-                break;//for-j
-                
-            }//for-j
-            
-            
-//            NSLog(@"arrReturnに『%@(%@)』を追加", strForAppend, node.features[1]);
-            Node *oldNode = node;
-            Node *newNode = [Node new];
-            newNode.surface = strForAppend;
-            newNode.feature = oldNode.feature;//格納の仕方がよくわからないので連結された中の最後のnodeのfeatureを格納
-            [arrReturn addObject:newNode];
-        }//if-noun
-        
-        //名詞は上記で作成したものを採用するとして名詞以外も全て格納
-        
-        
-    }//for-i
-    
-    
-    
-    return arrReturn;
-    
-    
-    
-    
-    
-    
-    
-    ////////以下は旧アルゴリズム
-    for(int i =0;i < [arrNodes count];i++){//全ての単語に対してサーチ
-        numOfAppend = 0;
-        node = arrNodes[i];
-        
-        //test
-        NSLog(@"%@ : %@(%@,%@,%@,%@)",
-              node.surface, node.partOfSpeech, node.features[0], node.features[1], node.features[2],node.features[3]);
-        //test
-        
-        
-        if([[node.features objectAtIndex:1] isEqualToString:@"非自立"]){//品詞第二分類が非自立の場合(必然的に第一分類は名詞である)
-            //こと、ため、の(名詞格)は非自立の名詞であるが、arrNounとしては不要
-            continue;
-        }else if([node.partOfSpeech isEqualToString:@"名詞"]){
-            
-            
-            //数字である場合(次に等価：if[[node.features objectAtIndex:1] isEqualToString:@"数"]){)
-            if([self isInArrayAt:arrNumber value:node.surface]){//数字であるかどうか確認する
-                for(int j = 0;j < [arrNumber count];j++){//数字配列の全てを検索する
-                    if([node.surface isEqualToString:arrNumber[j]]){//数字を特定する
-                        strForAppend = node.surface;//これから接続する数字を格納する
-                        //前が数字である可能性はない(数字であれば既にこのループにひっかかっているため)
-                        //後ろのみを探索:次「以降」のnodeを検索して数字がないか確認
-                        int k = i + 1;
-                        for(;k < [arrNodes count];k++){//次のindex:iを検索していく
-                            Node *nodeTmp = arrNodes[k];
-                            //以下、後ろにある単語に数字が続かないか検索していく
-                            if([self isInArrayAt:arrNumber value:nodeTmp.surface]){//まずは検索
-                                for(int L = 0;L < [arrNumber count];L++){//全ての数字との一致検索
-                                    if([nodeTmp.surface isEqualToString:arrNumber[L]]){
-                                        strForAppend = [NSString stringWithFormat:@"%@%@",
-                                                     strForAppend,arrNumber[L]];
-                                        numOfAppend++;
-                                        break;//for-L
-                                    }
-                                }//for-L
-                            }else{//後ろの文字が数字ではない場合
-                                
-                                //後ろの文字(index:k)のが接尾語である場合、
-                                //ここのブロックでは数字の後に続くことになるので単位である可能性があるので接続する
-                                //ex.2001年、２月、５日等
-                                NSArray *arrFeatures = nodeTmp.features;
-                                
-                                //arrFeaturesの中に入る配列の例
-                                //例：名詞,接尾,・・・
-                                //例：名詞,固有名詞,人名,姓,*,*,伊藤,イトウ,イトー
-                                if([arrFeatures[1] isEqualToString:@"接尾"]){
-                                    //数字と接尾語を連結
-                                    strForAppend = [NSString stringWithFormat:@"%@%@",
-                                                 strForAppend, nodeTmp.surface];
-                                    k++;//次のノードを先取りしたので、次はi = k+1番目から調べていく
-                                    numOfAppend++;
-                                    
-                                }
-                                
-                                
-                                //(数字の後ろが接尾語である場合に接続したら)終了
-                                break;//for-k
-                            }
-                        }//for-k
-                        
-                        //kはi+1からスタートしているためループ実行判定条件はkがi+2以上であるということ
-                        if(k > i + 1){//「上記for-kループが一回以上実行された」＝「arrNodes配列に数字が含まれていた」
-                            //次のiループで続きは(数字ではない)k番目のnodeから実行させる
-                            i=k-1;//重要！
-                            
-                            //一回ループが回った＝連続した数字は連結済(※離れた場所に数字がある可能性は残されたまま)
-                            break;//for-j:数字チェックループの終了
-                        }
-                        
-                    }//if:node==arrayNumber
+                    //今の数字が数字でその後も数字ならば連結
+//                    if([node.features[1] isEqualToString:@"数"]){//今の単語が数字で
+//    //                    NSLog(@"次の品詞は数字");
+//                        if([nodeNext.features[1] isEqualToString:@"数"]){//次の単語も数字である場合
+//                            strForAppend = [NSString stringWithFormat:@"%@%@",
+//                                            strForAppend,nodeNext.surface];
+//                            
+//                            [termObject setNode:nodeNext];
+//                            
+//                            i++;
+//                            continue;//次の単語j+1の探査へ
+//                        }
+//                    }
+//                    
+//                    
+//                    //今の名詞が一般名詞、固有名詞、サ変接続、形容動詞語幹で、次の同じような名詞の場合は連結(住民投票、投資行動)
+//                    if([node.features[1] isEqualToString:@"一般"]||
+//                       [node.features[1] isEqualToString:@"固有名詞"]||
+//                       [node.features[1] isEqualToString:@"サ変接続"]||
+//                       [node.features[1] isEqualToString:@"形容動詞語幹"]
+//                       ){//今の単語が一般名詞、もしくは固有名詞の場合
+//                        
+//                        if([nodeNext.features[1] isEqualToString:@"一般"]||
+//                           [nodeNext.features[1] isEqualToString:@"固有名詞"]||
+//                           [nodeNext.features[1] isEqualToString:@"サ変接続"]||
+//                           [nodeNext.features[1] isEqualToString:@"形容動詞語幹"]
+//                           ){//次の単語も一般名詞か固有名詞の場合
+//                            strForAppend = [NSString stringWithFormat:@"%@%@",
+//                                            strForAppend,nodeNext.surface];
+//                            
+//                            [termObject setNode:nodeNext];
+//                            
+//                            i++;
+//                            continue;//次の単語j+1の探査へ
+//                        }
+//                    }
+//                    
+//
+//                    //次の単語の品詞が接尾語である場合はどんな名詞に対しても連結
+//                    if([nodeNext.features[1] isEqualToString:@"接尾"]){
+////                    NSLog(@"次の品詞は接続詞");
+//                        strForAppend = [NSString stringWithFormat:@"%@%@",
+//                                        strForAppend,nodeNext.surface];
+//                        
+//                        [termObject setNode:nodeNext];
+//                        
+//                        i++;
+//                        break;//次の単語を探査せずに強制的に連結(格納)する
+//                    }
+                    
+                    //
+                    
+                    //上記サブifの全てに当てはまらない場合はbreakしてarrReturnに格納
+                    break;//for-j
+                    
                 }//for-j
-            }//if:number
-            else if([[node.features objectAtIndex:1] isEqualToString:@"固有名詞"] ||
-                    [[node.features objectAtIndex:1] isEqualToString:@"一般"]
-                    ){//ターゲットの品詞分類１が固有名詞等の場合
-                strForAppend = node.surface;//これから接続する固有名詞(または接尾辞)を格納する
-                //次も固有名詞であれば連結された固有名詞である可能性が高い
-//                int k = i + 1;
-                Node *nodeTmp = nil;
-                for(int k = i + 1;k < [arrNodes count];k++){
-                    nodeTmp = arrNodes[k];
-                    //固有(又は一般)名詞の後に固有(もしくは一般)名詞が来た場合は連結する
-                    if([[nodeTmp.features objectAtIndex:1] isEqualToString:@"固有名詞"] ||
-                       [[nodeTmp.features objectAtIndex:1] isEqualToString:@"一般"]){
-                        strForAppend = [NSString stringWithFormat:@"%@%@",
-                                        strForAppend,nodeTmp.surface];
-                        
-//                        NSLog(@"%@に%@を連結=>%@", node.surface, nodeTmp.surface, strForAppend);
-                        numOfAppend++;
-                        
-                    }else{
-                        
-//                        NSLog(@"固有名詞「%@」の後に「%@(%@)」",
-//                              strForAppend,
-//                              ((Node *)nodeTmp).surface,
-//                              [((Node *)nodeTmp).features objectAtIndex:1]);
-                        
-                        //if:ターゲット(固有名詞)の後に接尾辞の出現＝＞全ての品詞の後に続く接尾語は連結する必要がある
-                        
-                        if([[nodeTmp.features objectAtIndex:1] isEqualToString:@"接尾"]){
-//                        if([[((Node *)arrNodes[i+1]).features objectAtIndex:1] isEqualToString:@"接尾"]){
-//                            NSLog(@"%@に%@を連結", strForAppend, nodeTmp.surface);
-                            strForAppend = [NSString stringWithFormat:@"%@%@",
-                                            strForAppend,nodeTmp.surface];
-                            
-                            k++;
-                            numOfAppend++;
-                            
-                            
-                            
-                        }//if:ターゲット(固有名詞)の後に接尾辞の出現
-                        
-                        
-                        
-                        
-                        //kはi+1からスタートしているためループ実行判定条件はkがi+2以上であるということ
-                        if(k > i + 1){//「上記for-kループが一回以上実行された」＝「arrNodes配列に数字が含まれていた」
-                            //続きは(数字ではない)k番目のnodeから実行させる
-                            i=k-1;//重要！
-                            
-                            //一回ループが回った＝連続した固有名詞(接尾辞)は連結済
-                            
-                        }
-                        
-                        break;//for-k
-                    }//if:ターゲット(固有名詞)の後に固有名詞の連続出現
-                    
-                }//for-k
                 
-            }//if:ターゲットが固有名詞である場合
-        //        Node *node = arrayNodes[i];
-        //        NSLog(@"%@ : 品詞=%@", node.surface, node.partOfSpeech);
+                
+                //非自立型以外の名詞(で始まる単語)は全て格納
+                if(![node.features[1] isEqualToString:@"非自立"]){
+//            NSLog(@"arrReturnに『%@(%@)』を追加", strForAppend, node.features[1]);
+                    Node *oldNode = node;
+                    
+                    newNode.surface = strForAppend;
+                    newNode.feature = oldNode.feature;//格納の仕方がよくわからないので連結された中の最後のnodeのfeatureを格納
+                    [arrReturn addObject:newNode];
+                }
+                
+            }//if-noun
+            
+            //名詞は上記で作成したものを採用するとして名詞以外も全て格納:最終的にはTermObjectに全てのデータを格納する
+//            NSLog(@"arrAllTokenNode.count =  %d", [arrAllTokenNode count]);
+//            for(int cnt = 0;cnt < [termObject.partOfSpeechSubtypes1 count];cnt++){
+//                NSLog(@"newTerm %d = %@(%@)", cnt , termObject.surface,termObject.partOfSpeechSubtypes1[cnt]);
+//                NSLog(@"newTerm %d = %@(%@)", cnt , termObject.surface,termObject.partOfSpeechSubtypes2[cnt]);
+//                NSLog(@"newTerm %d = %@(%@)", cnt , termObject.surface,termObject.partOfSpeechSubtypes3[cnt]);
+//            }
+            [arrAllTokenNode addObject:termObject];//createAbstにおいて品詞等から５w１hデータを取得する
+            
+        }//for-i
         
-            if([strForAppend isEqualToString:@""]){
-                [arrReturn addObject:arrNodes[i]];
-            }else{
-//                NSLog(@"arrReturnに%@を追加", strForAppend);
-                Node *oldNode = arrNodes[i];
-                Node *newNode = [Node new];
-                newNode.surface = strForAppend;
-                newNode.feature = oldNode.feature;//格納の仕方がよくわからないので連結された中の最後のnodeのfeatureを格納
-                [arrReturn addObject:newNode];
-                strForAppend = @"";//初期化
-            }
-        }//if-名詞
-    }//for-i
-    
-    
-    
-    
-    
-    
-    return arrReturn;
-    ///////////////
-    
-    
-    
-    
-    
         
+        
+        return arrReturn;
+    
         
         
     }//autopoolrelease
@@ -779,8 +626,12 @@ NSMutableArray *arrAllTokenNode;//重要語句、副詞、助詞、形容詞、�
 //文章配列から(重複ありの)名詞配列を取り出す
 -(NSArray *)getDuplicateNodeFromArrSentence:(NSArray *)arrSentence{
     NSMutableArray *arrReturn = [NSMutableArray array];
+    
+    arrAllTokenNode = [NSMutableArray array];
+    
+    
     for(int noSen = 0;noSen < [arrSentence count];noSen++){
-        //まずはシンプルに名詞を取り出す
+        //まずはシンプルに名詞を取り出す(同時にarrAllTokenNodeを作成している)
         NSMutableArray *arrNounDuplicate =
         [self getNodeOnlyNoun:arrSentence[noSen]];//Node型で定義
         
@@ -1087,8 +938,8 @@ NSMutableArray *arrAllTokenNode;//重要語句、副詞、助詞、形容詞、�
             
             //重要語句を作成するために一旦、停止
             //文章から要約文を生成してarrAbstractSentenceに格納
-//            [arrAbstractSentence
-//             addObject:[self createAbstract:arrSentence[i]]];
+            [arrAbstractSentence
+             addObject:[self createAbstract:arrSentence[i]]];
             
         }
     }
@@ -1123,6 +974,9 @@ NSMutableArray *arrAllTokenNode;//重要語句、副詞、助詞、形容詞、�
  */
 -(NSString *)createAbstract:(NSString *)strOrigin{
     
+//    for(int i = 0;i < [arrAllTokenNode count];i++){
+//        NSLog(@"i=%d, %@", i, arrAllTokenNode[i]);
+//    }
     
     NSLog(@"createAbst(original):%@", strOrigin);
     
@@ -1315,10 +1169,6 @@ NSMutableArray *arrAllTokenNode;//重要語句、副詞、助詞、形容詞、�
                 strForAppend = @"";//初期化
             }//if-noun
         }//for-i
-        
-        
-        
-        
         
         return strAbst;
         
