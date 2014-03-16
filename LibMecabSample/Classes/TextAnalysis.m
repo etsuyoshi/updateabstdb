@@ -38,6 +38,7 @@ NSMutableArray *arrScoreNoun;//名詞の出現回数
 NSMutableArray *arrImportantNode;//重要語句(Node形式)
 NSMutableArray *arrImportantSentence;//重要文格納配列
 NSMutableArray *arrAbstractSentence;
+NSMutableArray *arrAllTokenNode;//重要語句、副詞、助詞、形容詞、動詞等全ての品詞を格納
 
 //selfフィールドにしても(selfが初期化されていないので)init内で初期化できずtextAnalysis.arrImportantNode等のような形で呼べない
 //@synthesize arrImportantSentence;
@@ -443,7 +444,11 @@ NSMutableArray *arrAbstractSentence;
  *「数」名詞である場合は、その後に数字が続く場合は連結
  *
  
- *エラー
+ 
+ *返り値は重要語を格納した配列
+ 
+ 
+ *旧アルゴリズムによるエラー=>改善済
  *数字の後の数字が連結されていない
  *文末に接尾語がある場合、直前の名詞に連結されていない
  
@@ -451,9 +456,17 @@ NSMutableArray *arrAbstractSentence;
  *(参考)node特性
  *node.features:ノードの特性を配列で取得
  *node.partOfSpeech:ノードの第一品詞をstring型で取得
+ 
+ 
+ 
+ *createAbstメソッド内において人名や地名、時間データを取得する必要ー＞氏名や日付など、トークンを連結する必要がある：[self getNodeOnlyNoun]と同じことを二回やる必要ないのでそこでarrAllTermを生成することにする
+ 
+ 
  */
 -(NSMutableArray *)getNodeOnlyNoun:(NSString *)string{
     @autoreleasepool {
+        //autoreleasepoolをしているので外部データの格納はできない?
+        arrAllTokenNode = [NSMutableArray array];
         
         
         
@@ -489,14 +502,15 @@ NSMutableArray *arrAbstractSentence;
         
         int original_i = i;
         if([node.features[0] isEqualToString:@"名詞"]){
+
             //格納済のその後の名詞を探索していく
             for(int j = 1;i+j < [arrNodes count];j++){//iが最後ならこのループは実行されない
                 Node *nodeNext = arrNodes[original_i + j];
                 
                 //test
-//                NSLog(@"now:%@(%@) next:%@(%@)",
-//                      strForAppend,node.features[1],
-//                      nodeNext.surface, nodeNext.features[1]);
+                NSLog(@"now:%@(%@) next:%@(%@)",
+                      strForAppend,node.features[1],
+                      nodeNext.surface, nodeNext.features[1]);
                 
                 //今の数字が数字でその後も数字ならば連結
                 if([node.features[1] isEqualToString:@"数"]){//今の単語が数字で
@@ -511,14 +525,17 @@ NSMutableArray *arrAbstractSentence;
                 }
                 
                 
-                //今の名詞が一般名詞もしくは固有名詞で、次の一般もしくは固有名詞の場合は連結
+                //今の名詞が一般名詞、固有名詞、サ変接続、形容動詞語幹で、次の同じような名詞の場合は連結(住民投票、投資行動)
                 if([node.features[1] isEqualToString:@"一般"]||
-                   [node.features[1] isEqualToString:@"固有名詞"]
+                   [node.features[1] isEqualToString:@"固有名詞"]||
+                   [node.features[1] isEqualToString:@"サ変接続"]||
+                   [node.features[1] isEqualToString:@"形容動詞語幹"]
                    ){//今の単語が一般名詞、もしくは固有名詞の場合
                     
-//                    NSLog(@"次の品詞は一般、固有名詞");
                     if([nodeNext.features[1] isEqualToString:@"一般"]||
-                       [nodeNext.features[1] isEqualToString:@"固有名詞"]
+                       [nodeNext.features[1] isEqualToString:@"固有名詞"]||
+                       [nodeNext.features[1] isEqualToString:@"サ変接続"]||
+                       [nodeNext.features[1] isEqualToString:@"形容動詞語幹"]
                        ){//次の単語も一般名詞か固有名詞の場合
                         strForAppend = [NSString stringWithFormat:@"%@%@",
                                         strForAppend,nodeNext.surface];
@@ -552,8 +569,11 @@ NSMutableArray *arrAbstractSentence;
             newNode.surface = strForAppend;
             newNode.feature = oldNode.feature;//格納の仕方がよくわからないので連結された中の最後のnodeのfeatureを格納
             [arrReturn addObject:newNode];
-            strForAppend = @"";//初期化
         }//if-noun
+        
+        //名詞は上記で作成したものを採用するとして名詞以外も全て格納
+        
+        
     }//for-i
     
     
@@ -1065,10 +1085,10 @@ NSMutableArray *arrAbstractSentence;
             
             
             
-            
+            //重要語句を作成するために一旦、停止
             //文章から要約文を生成してarrAbstractSentenceに格納
-            [arrAbstractSentence
-             addObject:[self createAbstract:arrSentence[i]]];
+//            [arrAbstractSentence
+//             addObject:[self createAbstract:arrSentence[i]]];
             
         }
     }
@@ -1096,39 +1116,130 @@ NSMutableArray *arrAbstractSentence;
     
 }
 
+
+/*
+ *目標：文中から重要でない句を見つけ、それを除外しつつ重要な文章を自然な形で終わるように整形する
+ *自然な文章とは5w1hがあること
+ */
 -(NSString *)createAbstract:(NSString *)strOrigin{
     
     
-    
+    NSLog(@"createAbst(original):%@", strOrigin);
     
     @autoreleasepool {
         NSString *strAbst = @"";
         
-        
+        //test
+        strOrigin = @"ウクライナで将来的に軍事衝突や信用収縮など「最悪」の事態が起きる可能性は小さいとの見方が多いものの、先行きの不透明感は極めて濃く、3月14日をピークに市場における緊張感が高まっている";//やってくる";
         
         NSMutableArray *arrReturn = [NSMutableArray array];
         NSArray *arrNodes = [self getNode:strOrigin];
         Node *node;
         NSString *strForAppend = @"";//連結用文字列
         
+        //5w1hに変換
+        
+        NSString *who;
+        //市場
+        
+        NSString *what;
+        //やってくる、高まっている
+        
+        NSString *when;
+        //3月14日をピークに:日付データの後に「に(助詞,格助詞,一般,*)」、「における、において」がある場合はwhen
+        
+        NSString *where;
+        //地名データを文章から探す。
+        
+        NSString *why;
+        //文章全体から「だから、なぜなら」、等の理由を取得
+        
+        NSString *how;
+        //文章全体から、「によって」、「を使って」を拾ってくる
+        
+        //軍事衝突や信用収縮など「最悪」の事態が起きる可能性は小さいとの見方が多いものの、先行きの不透明感は極めて濃く、市場における緊張感が高まっている
+
         
         
-        //全てのノードに対してサーチ
-        
-        //サーチ対象のノードをstring型に変更してstrForAppendに格納
-        
-        //数字(：名詞)の場合はその後に品詞を調べて数字かどうか調査
-        //＝＞数字である場合は連結してstrForAppendに格納
-        //。。。繰り返す
-        
-        //その後に続くのが接尾語である場合は直前の名詞(かどうか判定)を連結
+        //まずは読点「、」で文章を分割
+        NSArray *array = [strOrigin componentsSeparatedByString:@"、"];
+        for (NSString *component in array) {
+            NSLog(@"%@", component);
+        }
         
         
         
         
+        //非重要単語が含まれていない文章の後に接続助詞(ものの)が続く場合はその前の文章を除外する
+        //形容詞の前の副詞も除外
+        //など(助詞,副助詞,*,*)
         
+        //言い換え
+        //ものの＝＞一方で
+        //における＝＞の
+        //動詞、自立「・・っている」＝＞「・・る」
+        
+        
+//        NSString *
         for(int i = 0;i < [arrNodes count];i++){//次の単語を探すのは連結した単語の数に応じて。
+            
             node = arrNodes[i];
+            
+            
+            NSLog(@"%@(%@,%@,%@,%@)",
+                  node.surface,node.features[0],node.features[1],
+                  node.features[2], node.features[3]);
+            
+            
+            
+            //人名や地名、時間データを取得する必要ー＞氏名や日付など、トークンを連結する必要がある：[self getNodeOnlyNoun]と同じことを二回やる必要ないのでそこでarrAllTermを生成することにする
+            
+            //係助詞を探索
+            if([node.features[1] isEqualToString:@"係助詞"]){
+                if(i > 0){
+                    who = ((Node *)arrNodes[i-1]).surface;
+                    NSLog(@"who = %@", who);
+                }
+                
+                //後ろの動詞を探す
+                NSMutableArray *arrVerb = [NSMutableArray array];
+                for(int j = i+1;j < [arrNodes count];j++){
+                    Node *nextNode = arrNodes[j];
+                    if([nextNode.features[0] isEqualToString:@"動詞"]){
+                        [arrVerb addObject:nextNode.surface];
+                        NSLog(@"surface:[%@]", nextNode.surface);
+                        NSLog(@"original:[%@]", nextNode.originalForm);
+                        NSLog(@"partOfSpeech:[%@]", nextNode.partOfSpeech);
+                        NSLog(@"partOfSpeechSubtype1:[%@]", nextNode.partOfSpeechSubtype1);
+                        NSLog(@"partOfSpeechSubtype2:[%@]", nextNode.partOfSpeechSubtype2);
+                        NSLog(@"partOfSpeechSubtype3:[%@]", nextNode.partOfSpeechSubtype3);
+                        NSLog(@"inflection:[%@]", nextNode.inflection);
+                        NSLog(@"useOfType:[%@]", nextNode.useOfType);
+                        NSLog(@"reading:[%@]", nextNode.reading);
+                        NSLog(@"pronunciation:[%@]", nextNode.pronunciation);
+                        
+                    }
+                }
+                //動詞が一つしかなければwhatとして採用
+                if([arrVerb count] == 1){
+                    what = arrVerb[0];
+                    NSLog(@"what = %@", what);
+                }else if([arrVerb count] == 0){
+                    NSLog(@"動詞が見つかりません");
+                }else{
+                    NSLog(@"動詞が複数見つかりました");
+                }
+            }
+            
+            
+            continue;//
+            
+            
+            //以下は必要に応じてコピペ用に残しておく
+            
+            
+            //original：[self getNodeOnlyNoun]
+            
             //非自立語の場合はスルー
             if([node.features[1] isEqualToString:@"非自立"]){
                 continue;

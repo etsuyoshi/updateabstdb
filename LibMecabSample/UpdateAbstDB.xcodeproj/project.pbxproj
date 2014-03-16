@@ -29,6 +29,7 @@
 		1DF5F4E00D08C38300B7A737 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1DF5F4DF0D08C38300B7A737 /* UIKit.framework */; };
 		288765A50DF7441C002DB57D /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 288765A40DF7441C002DB57D /* CoreGraphics.framework */; };
 		28D7ACF80DDB3853001CB0EB /* NewsabViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 28D7ACF70DDB3853001CB0EB /* NewsabViewController.m */; };
+		341FD30318D54C7B006D8572 /* TermObject.m in Sources */ = {isa = PBXBuildFile; fileRef = 341FD30218D54C7B006D8572 /* TermObject.m */; };
 		343267741892663200F18CED /* Default-568h@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 343267731892663200F18CED /* Default-568h@2x.png */; };
 		3435871F18AA334200D8632B /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 3435871E18AA334200D8632B /* ViewController.m */; };
 		3435872818AA344500D8632B /* ArticleCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 3435872118AA344500D8632B /* ArticleCell.m */; };
@@ -97,6 +98,8 @@
 		28D7ACF70DDB3853001CB0EB /* NewsabViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = NewsabViewController.m; path = Classes/NewsabViewController.m; sourceTree = "<group>"; };
 		29B97316FDCFA39411CA2CEA /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		32CA4F630368D1EE00C91783 /* UpdateAbstDB_Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = UpdateAbstDB_Prefix.pch; sourceTree = "<group>"; };
+		341FD30118D54C7B006D8572 /* TermObject.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TermObject.h; sourceTree = "<group>"; };
+		341FD30218D54C7B006D8572 /* TermObject.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TermObject.m; sourceTree = "<group>"; };
 		343267731892663200F18CED /* Default-568h@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Default-568h@2x.png"; sourceTree = "<group>"; };
 		3435871D18AA334200D8632B /* ViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ViewController.h; sourceTree = "<group>"; };
 		3435871E18AA334200D8632B /* ViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ViewController.m; sourceTree = "<group>"; };
@@ -329,6 +332,8 @@
 				3435872D18AA346D00D8632B /* DatabaseManage.m */,
 				349D49DA18AB058400AF3FCD /* TextAnalysis.h */,
 				349D49DB18AB058400AF3FCD /* TextAnalysis.m */,
+				341FD30118D54C7B006D8572 /* TermObject.h */,
+				341FD30218D54C7B006D8572 /* TermObject.m */,
 			);
 			name = Data;
 			sourceTree = "<group>";
@@ -463,6 +468,7 @@
 				28D7ACF80DDB3853001CB0EB /* NewsabViewController.m in Sources */,
 				34EA200D18A2001F004376A0 /* XPathQuery.m in Sources */,
 				3435872A18AA344600D8632B /* BackgroundView.m in Sources */,
+				341FD30318D54C7B006D8572 /* TermObject.m in Sources */,
 				34EA200C18A2001F004376A0 /* TFHppleElement.m in Sources */,
 				3435872818AA344500D8632B /* ArticleCell.m in Sources */,
 				3435871F18AA334200D8632B /* ViewController.m in Sources */,
