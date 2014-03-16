@@ -560,7 +560,22 @@ NSMutableArray *arrAllTokenNode;//重要語句、副詞、助詞、形容詞、�
 //                        break;//次の単語を探査せずに強制的に連結(格納)する
 //                    }
                     
-                    //
+                    //名詞の次に名詞が来たら全て連結させる
+                    if([nodeNext.features[0] isEqualToString:@"名詞"]){
+                        //                    NSLog(@"次の品詞は接続詞");
+                        strForAppend = [NSString stringWithFormat:@"%@%@",
+                                        strForAppend,nodeNext.surface];
+                        
+                        [termObject setNode:nodeNext];
+                        
+                        i++;
+                        if([nodeNext.features[1] isEqualToString:@"接尾"]){
+                            break;//次の単語を探査せずに強制的に連結(格納)する
+                        }else{
+                            continue;//次の単語j+1の探査して名詞なら連結していく
+                        }
+                    }
+
                     
                     //上記サブifの全てに当てはまらない場合はbreakしてarrReturnに格納
                     break;//for-j
