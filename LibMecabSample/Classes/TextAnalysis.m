@@ -999,7 +999,7 @@ NSMutableArray *arrAllTokenNode;//重要語句、副詞、助詞、形容詞、�
         NSString *strAbst = @"";
         
         //test
-        strOrigin = @"ウクライナで将来的に軍事衝突や信用収縮など「最悪」の事態が起きる可能性は小さいとの見方が多いものの、これは残念だけれども、明日は我が身ということで先行きの不透明感は極めて濃く、3月14日をピークに市場における緊張感が高まっている";//やってくる";
+        strOrigin = @"ウクライナで将来的に軍事衝突や信用収縮など「最悪」の事態が起きる可能性は小さいとの見方が多いものの、美しい、楽しいだけでは解決できないので、これは残念なことだけれども、明日は我が身ということで先行きの不透明感は極めて濃く、3月14日をピークに市場における緊張感が高まっている";//やってくる";
         
         
         
@@ -1032,18 +1032,22 @@ NSMutableArray *arrAllTokenNode;//重要語句、副詞、助詞、形容詞、�
 
         
         
+        
         //まずは読点「、」で文章を分割
-        NSArray *array = [strOrigin componentsSeparatedByString:@"、"];
+//        NSArray *array = [strOrigin componentsSeparatedByString:@"、"];
+        //正しく文節に接続する(単純な句読点だけではない)
+        NSArray *array = [self getPharase:strOrigin];
+        int i = 0;
         for (NSString *component in array) {
-            NSLog(@"%@", component);
+            NSLog(@"phrase%d%@", i++, component);
         }
         
         
         
         //方針：
-        //①句読点や接続助詞等により文章を文節に区切る
+        //①句読点や接続助詞等により文章を文節に区切る（ただし、単語のみで区切られるものは除く)：文節には最後に句読点を含む形で格納する
         //①−１文節毎に重要語句が含まれているか否かで採用非採用を決定：非重要単語が含まれていない文章の後に接続助詞(ものの)が続く場合はその前の文章を除外する
-        //
+        
         //②形容詞の前の副詞も除外
         //③など(助詞,副助詞,*,*)は除外
         //③−１名詞A1(や)名詞A2...＋等＋名詞B：名詞Bのみ
@@ -1372,6 +1376,39 @@ NSMutableArray *arrAllTokenNode;//重要語句、副詞、助詞、形容詞、�
     
     //並べ替えられた配列を返す
     return _arrReturn;
+}
+
+
+//文章から文節を区切って配列に格納する
+-(NSMutableArray *)getPharase:(NSString *)strSentence{
+    
+    @autoreleasepool {
+        
+        NSMutableArray *array = (NSMutableArray *)[strSentence componentsSeparatedByString:@"、"];
+        
+        
+        for(int i = 0 ;i < [array count]-1;i++){//最後の文節は「。」で終わるので判断せずに文節として認識するので最後まで判別しない
+            //mecabで形態素解析
+            NSArray *_arrNode = [self getNode:array[i]];
+
+            
+            //各文節内の最後の形態素の品詞が接続詞でない場合は後ろのフレーズ(文節)に接続する
+            if(![((Node *)_arrNode[[_arrNode count]-1]).features[1] isEqualToString:@"接続助詞"]){
+                array[i+1] = [NSString stringWithFormat:@"%@、%@",
+                              array[i], array[i+1]];
+                [array removeObjectAtIndex:i];
+                
+                i--;//上記でremove(後ろの要素のidが一つずつ低下)したので次に検索するのは削除された番号と同じ
+            }
+        }
+        
+        //各文節の最後は句読点で終わるようにする：「言い換え」で句読点を使用するため
+        for(int i = 0;i < [array count]-1;i++){
+            array[i] = [NSString stringWithFormat:@"%@、",array[i]];
+        }
+        
+        return array;
+    }
 }
 
 
