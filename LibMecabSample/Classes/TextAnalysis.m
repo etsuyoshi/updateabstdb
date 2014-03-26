@@ -999,9 +999,10 @@ NSMutableArray *arrAllTokenNode;//重要語句、副詞、助詞、形容詞、�
         NSString *strAbst = @"";
         
         //test
-        strOrigin = @"ウクライナで将来的に軍事衝突や信用収縮など「最悪」の事態が起きる可能性は小さいとの見方が多いものの、美しい、楽しいだけでは解決できないので、これは残念なことだけれども、明日は我が身ということで先行きの不透明感は極めて濃く、3月14日をピークに市場における緊張感が高まっている";//やってくる";
-        
-        
+//        strOrigin = @"ウクライナで将来的に軍事衝突や信用収縮など「最悪」の事態が起きる可能性は小さいとの見方が多いものの、美しい、楽しいだけでは解決できないように、これは残念なことだけれども、しかしながら明日は我が身ということで先行きの不透明感は極めて濃く、多くの人は楽しみつつ、3月14日をピークに市場における緊張感が高まっているが、かならずやってくる。";//やってくる";
+//        strOrigin = @"武田信玄は光陰矢の如し動き、山のように動かなかった";
+//        strOrigin = @"俺が、頑張っているように、明日は曇るかもしれないけど、少し強気過ぎだけれども、ちょっと頑張ってますが、勉強していましたが、テストには受かったが、世の中が賞賛している。";
+        strOrigin = @"今日の来客の感謝を申し上げる。";
         
         NSMutableArray *arrReturn = [NSMutableArray array];
         NSArray *arrNodes = [self getNode:strOrigin];
@@ -1030,17 +1031,165 @@ NSMutableArray *arrAllTokenNode;//重要語句、副詞、助詞、形容詞、�
         
         //軍事衝突や信用収縮など「最悪」の事態が起きる可能性は小さいとの見方が多いものの、先行きの不透明感は極めて濃く、市場における緊張感が高まっている
 
+
+        //まずは正しく文節に接続する(単純な句読点だけではない)
+        //文節毎にnodeが格納されている
+        //各文節は句読点で終了している
+        NSMutableArray *arrPhrase = [self getPhrase:strOrigin];
+//        int _no = 0;
+//        for (NSString *component in arrPhrase) {
+//            NSLog(@"phrase%d%@", _no++, component);
+//        }
+        
+        
+        //以下の93のルールを適用する
+        //https://docs.google.com/spreadsheets/d/1rijl1-ewSYADnznTr4LLBvlha8v6weZ_hrPHH0nw5NY/edit#gid=0
+        
+        
+        for(int i = 0 ;i < [arrPhrase count];i++){
+            
+            //各文節において最後の形態素(読点)のid番号を取得する
+            int cntArrPhrase_i = [arrPhrase[i] count];
+            
+            //4.1.1-3：挨拶文の削除
+            if([((Node *)(arrPhrase[i][0])).surface isEqualToString:@"おはようございます。"] ||
+               [((Node *)arrPhrase[i][0]).surface isEqualToString:@"お帰りなさい。"] ||
+               [((Node *)arrPhrase[i][0]).surface isEqualToString:@"さようなら。"] ||
+               [((Node *)arrPhrase[i][0]).surface isEqualToString:@"よろしくお願い致します。"]
+               ){
+                
+                [arrPhrase removeObjectAtIndex:i];//該当文節を削除する
+                i--;//検索対象の番号を一つずつ減らす
+                continue;
+            }
+            
+            
+            
+            
+            
+            
+            //4.2.1-7:判別に必要な個数だけあることを担保する必要がある
+            if(
+               (//4.2.1：ように
+                [((Node *)(arrPhrase[i][(cntArrPhrase_i>4?cntArrPhrase_i:3)-3])).surface isEqualToString:@"よう"] &&
+                [((Node *)(arrPhrase[i][cntArrPhrase_i-2])).surface isEqualToString:@"に"]
+                )
+               ||
+               (//4.2.2：けれども
+                [((Node *)(arrPhrase[i][cntArrPhrase_i-2])).surface isEqualToString:@"けれども"]
+                )
+               ||
+               (//4.2.3：ますが
+                [((Node *)(arrPhrase[i][(cntArrPhrase_i>4?cntArrPhrase_i:3)-3])).surface isEqualToString:@"ます"] &&
+                [((Node *)(arrPhrase[i][cntArrPhrase_i-2])).surface isEqualToString:@"が"]
+                )
+               ||
+               (//4.2.4：ですが
+                [((Node *)(arrPhrase[i][(cntArrPhrase_i>4?cntArrPhrase_i:3)-3])).surface isEqualToString:@"です"] &&
+                [((Node *)(arrPhrase[i][cntArrPhrase_i-2])).surface isEqualToString:@"が"]
+                )
+               ||
+               (//4.2.5：ましたが
+                [((Node *)(arrPhrase[i][(cntArrPhrase_i>5?cntArrPhrase_i:4)-4])).surface isEqualToString:@"まし"] &&
+                [((Node *)(arrPhrase[i][(cntArrPhrase_i>4?cntArrPhrase_i:3)-3])).surface isEqualToString:@"た"] &&
+                [((Node *)(arrPhrase[i][cntArrPhrase_i-2])).surface isEqualToString:@"が"]
+                )
+               ||
+               (//4.2.6：が
+                [((Node *)(arrPhrase[i][cntArrPhrase_i-2])).surface isEqualToString:@"が"] &&
+                [((Node *)(arrPhrase[i][cntArrPhrase_i-2])).features[1] isEqualToString:@"接続助詞"]//格助詞ではないことを区別するため
+                )
+               ||
+               (//4.2.7：けど
+                [((Node *)(arrPhrase[i][cntArrPhrase_i-2])).surface isEqualToString:@"けど"]
+                )
+
+               ){
+                
+                
+                //4.2.8-13
+                //番号iより前で「これは」、「他方」、、、等があればその文節からそこまでを削除する
+                //開始番号を見つける
+                int noStart;
+                for(noStart = i-1;noStart >= 0; noStart--){
+                    int cntArrPhrase_noStart = [arrPhrase[noStart] count];
+                    if(
+                       (//4.2.8：これは
+                        [((Node *)(arrPhrase[noStart][0])).surface isEqualToString:@"これ"] &&
+                        [((Node *)(arrPhrase[noStart][MIN(1,cntArrPhrase_noStart-1)])).surface isEqualToString:@"は"]
+                        )
+                       ||
+                       (//4.2.9：他方
+                        [((Node *)(arrPhrase[noStart][0])).surface isEqualToString:@"他方"]
+                        )
+                       ||
+                       (//4.2.10：一方
+                        [((Node *)(arrPhrase[noStart][0])).surface isEqualToString:@"一方"]
+                        )
+                       ||
+                       (//4.2.11：しかし
+                        [((Node *)(arrPhrase[noStart][0])).surface isEqualToString:@"しかし"] ||
+                        [((Node *)(arrPhrase[noStart][0])).surface isEqualToString:@"しかしながら"]
+                        )
+                       ||
+                       (//4.2.12：先ほど
+                        [((Node *)(arrPhrase[noStart][0])).surface isEqualToString:@"先ほど"] ||
+                        [((Node *)(arrPhrase[noStart][0])).surface isEqualToString:@"先程"] ||
+                        [((Node *)(arrPhrase[noStart][0])).surface isEqualToString:@"さきほど"]
+                        )
+                       ||
+                       (//4.2.13：同時に
+                        [((Node *)(arrPhrase[noStart][0])).surface isEqualToString:@"同時"] &&
+                        [((Node *)(arrPhrase[noStart][MIN(1,cntArrPhrase_noStart-1)])).surface isEqualToString:@"に"]
+                        )
+                       ){
+                        
+                        
+                        break;//for-noStart
+                    }//if
+                }//for-noStart
+                
+                //開始の接続助詞が見つからなかったら削除対象の文節はiのみ
+                if(noStart == -1){
+                    noStart = i;
+                }
+                
+                NSLog(@"文節%d「%@」から文節%d「%@」までを削除します",
+                      noStart,((Node *)arrPhrase[noStart][0]).surface,
+                      i, ((Node *)arrPhrase[i][0]).surface);
+                
+                //noStartからiまでの[i-noStart+1]個を削除する
+                [arrPhrase removeObjectsInRange:NSMakeRange(noStart, i-noStart+1)];
+                
+            }//if-4.2.1-18
+        }//for-i:allPhrase
         
         
         
-        //まずは読点「、」で文章を分割
-//        NSArray *array = [strOrigin componentsSeparatedByString:@"、"];
-        //正しく文節に接続する(単純な句読点だけではない)
-        NSArray *array = [self getPharase:strOrigin];
-        int i = 0;
-        for (NSString *component in array) {
-            NSLog(@"phrase%d%@", i++, component);
+        //4.3換言
+        for(int i = 0;i < [arrPhrase count];i++){//各文節に対して
+//            int cntArrPhrase_i = [arrPhrase[i] count];//文節内のトークンの個数
+            for(int noToken = 0;noToken < [arrPhrase[i] count];noToken++){//文節内の各トークンに対して
+                
+            }
+            
         }
+        
+        
+        //確認用出力コード
+        for(int i = 0;i < [arrPhrase count];i++){
+            for(int j = 0;j < [arrPhrase[i] count];j++){
+                NSLog(@"%@(%@,%@,%@,%@,%@)",
+                      ((Node *)arrPhrase[i][j]).surface,
+                      ((Node *)arrPhrase[i][j]).features[0],
+                      ((Node *)arrPhrase[i][j]).features[1],
+                      ((Node *)arrPhrase[i][j]).features[2],
+                      ((Node *)arrPhrase[i][j]).features[3],
+                      ((Node *)arrPhrase[i][j]).features[4]
+                      );
+            }
+        }
+        
         
         
         
@@ -1065,8 +1214,9 @@ NSMutableArray *arrAllTokenNode;//重要語句、副詞、助詞、形容詞、�
         
         
 //        NSString *
+        
         for(int i = 0;i < [arrNodes count];i++){//次の単語を探すのは連結した単語の数に応じて。
-            
+         /*
             node = arrNodes[i];
             
             
@@ -1114,7 +1264,7 @@ NSMutableArray *arrAllTokenNode;//重要語句、副詞、助詞、形容詞、�
                     NSLog(@"動詞が複数見つかりました");
                 }
             }
-            
+            */
             
             continue;//
             
@@ -1379,35 +1529,72 @@ NSMutableArray *arrAllTokenNode;//重要語句、副詞、助詞、形容詞、�
 }
 
 
-//文章から文節を区切って配列に格納する
--(NSMutableArray *)getPharase:(NSString *)strSentence{
+/*
+ *文章から文節を取得し、各「形態素node」を要素とする配列を、各要素に格納した配列を返す
+ *例：出力配列
+ * 要素０：文節０の形態素０、文節０の形態素１、文節０の形態素２、・・・
+ * 要素１：文節１の形態素０、文節１の形態素１、文節１の形態素２、・・・
+ * ・・・
+ *
+ */
+-(NSMutableArray *)getPhrase:(NSString *)strSentence{
     
     @autoreleasepool {
         
-        NSMutableArray *array = (NSMutableArray *)[strSentence componentsSeparatedByString:@"、"];
+        NSMutableArray *_arrPhrase = (NSMutableArray *)[strSentence componentsSeparatedByString:@"、"];
         
-        
-        for(int i = 0 ;i < [array count]-1;i++){//最後の文節は「。」で終わるので判断せずに文節として認識するので最後まで判別しない
+        //_arrPhraseを再構成する
+        for(int i = 0 ;i < [_arrPhrase count]-1;i++){//最後の文節は「。」で終わるので判断せずに文節として認識するので最後まで判別しない
             //mecabで形態素解析
-            NSArray *_arrNode = [self getNode:array[i]];
-
+            NSArray *_arrNode = [self getNode:_arrPhrase[i]];
             
-            //各文節内の最後の形態素の品詞が接続詞でない場合は後ろのフレーズ(文節)に接続する
-            if(![((Node *)_arrNode[[_arrNode count]-1]).features[1] isEqualToString:@"接続助詞"]){
-                array[i+1] = [NSString stringWithFormat:@"%@、%@",
-                              array[i], array[i+1]];
-                [array removeObjectAtIndex:i];
+            //テスト:文節で区切りたい文言を調べたいときに調べるため、文末の形態素を調べる
+            NSLog(@"文節の末尾:%@=0%@,1%@,2%@,3%@,4%@,5%@,6%@,7%@,8%@",
+                  ((Node *)_arrNode[[_arrNode count]-1]).surface,
+                  ((Node *)_arrNode[[_arrNode count]-1]).features[0],
+                  ((Node *)_arrNode[[_arrNode count]-1]).features[1],
+                  ((Node *)_arrNode[[_arrNode count]-1]).features[2],
+                  ((Node *)_arrNode[[_arrNode count]-1]).features[3],
+                  ((Node *)_arrNode[[_arrNode count]-1]).features[4],
+                  ((Node *)_arrNode[[_arrNode count]-1]).features[5],
+                  ((Node *)_arrNode[[_arrNode count]-1]).features[6],
+                  ((Node *)_arrNode[[_arrNode count]-1]).features[7],
+                  ((Node *)_arrNode[[_arrNode count]-1]).features[8]
+                  );
+            
+            //各文節内の最後の形態素の品詞が接続助詞でない場合は後ろのフレーズ(文節)に接続する
+            if(!
+               ([((Node *)_arrNode[[_arrNode count]-1]).features[1] isEqualToString:@"接続助詞"])
+               //それ以外にも文節の区切りを増やす場合は以下のように設定すること
+               ||
+               ([((Node *)_arrNode[[_arrNode count]-1]).features[0] isEqualToString:@"形容詞"] &&
+                [((Node *)_arrNode[[_arrNode count]-1]).features[5] isEqualToString:@"連用テ接続"])
+//               ||
+//               ([((Node *)_arrNode[[_arrNode count]-1]).features[1] isEqualToString:@"接続助詞"])
+               ){
+                _arrPhrase[i+1] = [NSString stringWithFormat:@"%@、%@",
+                              _arrPhrase[i], _arrPhrase[i+1]];
+                [_arrPhrase removeObjectAtIndex:i];
                 
                 i--;//上記でremove(後ろの要素のidが一つずつ低下)したので次に検索するのは削除された番号と同じ
             }
         }
         
         //各文節の最後は句読点で終わるようにする：「言い換え」で句読点を使用するため
-        for(int i = 0;i < [array count]-1;i++){
-            array[i] = [NSString stringWithFormat:@"%@、",array[i]];
+        for(int i = 0;i < [_arrPhrase count]-1;i++){
+            _arrPhrase[i] = [NSString stringWithFormat:@"%@、",_arrPhrase[i]];
         }
         
-        return array;
+        //以上で_arrPhraseの再構成完了
+        
+        //各文節の形態素nodeを格納した配列を要素とする配列を作成
+        NSMutableArray *arrReturn = [NSMutableArray array];
+        for(int i = 0;i < [_arrPhrase count];i++){
+            [arrReturn addObject:[self getNode:_arrPhrase[i]]];
+        }
+        
+        
+        return arrReturn;
     }
 }
 
