@@ -1002,7 +1002,7 @@ NSMutableArray *arrAllTokenNode;//重要語句、副詞、助詞、形容詞、�
 //        strOrigin = @"ウクライナで将来的に軍事衝突や信用収縮など「最悪」の事態が起きる可能性は小さいとの見方が多いものの、美しい、楽しいだけでは解決できないように、これは残念なことだけれども、しかしながら明日は我が身ということで先行きの不透明感は極めて濃く、多くの人は楽しみつつ、3月14日をピークに市場における緊張感が高まっているが、かならずやってくる。";//やってくる";
 //        strOrigin = @"武田信玄は光陰矢の如し動き、山のように動かなかった";
 //        strOrigin = @"俺が、頑張っているように、明日は曇るかもしれないけど、少し強気過ぎだけれども、ちょっと頑張ってますが、勉強していましたが、テストには受かったが、世の中が賞賛している。";
-        strOrigin = @"今日の来客の感謝を申し上げる。";
+        strOrigin = @"今日の来客の感謝を申し上げた。";
         
         NSMutableArray *arrReturn = [NSMutableArray array];
         NSArray *arrNodes = [self getNode:strOrigin];
@@ -1169,10 +1169,32 @@ NSMutableArray *arrAllTokenNode;//重要語句、副詞、助詞、形容詞、�
         //4.3換言
         for(int i = 0;i < [arrPhrase count];i++){//各文節に対して
 //            int cntArrPhrase_i = [arrPhrase[i] count];//文節内のトークンの個数
-            for(int noToken = 0;noToken < [arrPhrase[i] count];noToken++){//文節内の各トークンに対して
-                
+            //4.3.1:「の(連体助詞)」+NV(サ変名詞)+を+申し上げる=>NVを述べる
+            for(int noToken = 0;noToken < [arrPhrase[i] count]-3;noToken++){//文節内の各トークンに対して(countが少なくとも4個以上ないとだめ)
+                if([((Node *)arrPhrase[i][noToken]).surface isEqualToString:@"の"] &&
+                   [((Node *)arrPhrase[i][noToken]).features[0] isEqualToString:@"助詞"] &&
+                   [((Node *)arrPhrase[i][noToken]).features[1] isEqualToString:@"連体化"]){
+                    
+                    if([((Node *)arrPhrase[i][noToken+1]).features[0] isEqualToString:@"名詞"] &&
+                       [((Node *)arrPhrase[i][noToken+1]).features[1] isEqualToString:@"サ変接続"]){
+                        
+                        if([((Node *)arrPhrase[i][noToken+2]).surface isEqualToString:@"を"] &&
+                           [((Node *)arrPhrase[i][noToken+2]).features[0] isEqualToString:@"助詞"] &&
+                           [((Node *)arrPhrase[i][noToken+2]).features[1] isEqualToString:@"格助詞"]){
+                            
+                            if(
+                               (
+                                [((Node *)arrPhrase[i][noToken+3]).surface isEqualToString:@"申し上げ"] ||
+                                [((Node *)arrPhrase[i][noToken+3]).surface isEqualToString:@"申しあげ"] ||
+                                [((Node *)arrPhrase[i][noToken+3]).surface isEqualToString:@"もうしあげ"] ||
+                                [((Node *)arrPhrase[i][noToken+3]).surface isEqualToString:@"もうし上げ"])&&
+                               [((Node *)arrPhrase[i][noToken+3]).features[0] isEqualToString:@"動詞"]){
+                                
+                            }
+                        }
+                    }
+                }
             }
-            
         }
         
         
