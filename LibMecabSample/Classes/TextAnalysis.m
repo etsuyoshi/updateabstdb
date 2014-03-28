@@ -998,11 +998,11 @@ NSMutableArray *arrAllTokenNode;//重要語句、副詞、助詞、形容詞、�
     @autoreleasepool {
         NSString *strAbst = @"";
         
-        //test
+        //test*************
 //        strOrigin = @"ウクライナで将来的に軍事衝突や信用収縮など「最悪」の事態が起きる可能性は小さいとの見方が多いものの、美しい、楽しいだけでは解決できないように、これは残念なことだけれども、しかしながら明日は我が身ということで先行きの不透明感は極めて濃く、多くの人は楽しみつつ、3月14日をピークに市場における緊張感が高まっているが、かならずやってくる。";//やってくる";
 //        strOrigin = @"武田信玄は光陰矢の如し動き、山のように動かなかった";
 //        strOrigin = @"俺が、頑張っているように、明日は曇るかもしれないけど、少し強気過ぎだけれども、ちょっと頑張ってますが、勉強していましたが、テストには受かったが、世の中が賞賛している。";
-        strOrigin = @"今日の来客の感謝を申し上げた。";
+        strOrigin = @"言って申し上げまして、俺は申し上げられないので、申し上げた。";//晴天に懇願を申し上げ、今日の来客のご連絡申し上げます";
         
         NSMutableArray *arrReturn = [NSMutableArray array];
         NSArray *arrNodes = [self getNode:strOrigin];
@@ -1036,6 +1036,9 @@ NSMutableArray *arrAllTokenNode;//重要語句、副詞、助詞、形容詞、�
         //文節毎にnodeが格納されている
         //各文節は句読点で終了している
         NSMutableArray *arrPhrase = [self getPhrase:strOrigin];
+        //NSMutableArray *arrPhrase = (NSMutableArray *)[self getPhrase:strOrigin];
+        
+        
 //        int _no = 0;
 //        for (NSString *component in arrPhrase) {
 //            NSLog(@"phrase%d%@", _no++, component);
@@ -1164,13 +1167,15 @@ NSMutableArray *arrAllTokenNode;//重要語句、副詞、助詞、形容詞、�
             }//if-4.2.1-18
         }//for-i:allPhrase
         
-        
+        for(int lkj = 0;lkj < -1;lkj++){
+            NSLog(@"実行");
+        }
         
         //4.3換言
+        NSLog(@"arrPhrase = %d", [arrPhrase count]);
+        //4.3.1:「の(連体助詞)」+NV(サ変名詞)+を+申し上げ=>NVを述べ
         for(int i = 0;i < [arrPhrase count];i++){//各文節に対して
-//            int cntArrPhrase_i = [arrPhrase[i] count];//文節内のトークンの個数
-            //4.3.1:「の(連体助詞)」+NV(サ変名詞)+を+申し上げる=>NVを述べる
-            for(int noToken = 0;noToken < [arrPhrase[i] count]-3;noToken++){//文節内の各トークンに対して(countが少なくとも4個以上ないとだめ)
+            for(int noToken = 0;noToken < (int)[arrPhrase[i] count]-3;noToken++){//文節内の各トークンに対して(countが少なくとも4個以上ないとだめ:3=4-1)
                 if([((Node *)arrPhrase[i][noToken]).surface isEqualToString:@"の"] &&
                    [((Node *)arrPhrase[i][noToken]).features[0] isEqualToString:@"助詞"] &&
                    [((Node *)arrPhrase[i][noToken]).features[1] isEqualToString:@"連体化"]){
@@ -1184,12 +1189,41 @@ NSMutableArray *arrAllTokenNode;//重要語句、副詞、助詞、形容詞、�
                             
                             if(
                                (
-                                [((Node *)arrPhrase[i][noToken+3]).surface isEqualToString:@"申し上げ"] ||
-                                [((Node *)arrPhrase[i][noToken+3]).surface isEqualToString:@"申しあげ"] ||
-                                [((Node *)arrPhrase[i][noToken+3]).surface isEqualToString:@"もうしあげ"] ||
-                                [((Node *)arrPhrase[i][noToken+3]).surface isEqualToString:@"もうし上げ"])&&
+                                [((Node *)arrPhrase[i][noToken+3]).surface rangeOfString:@"申し上げ"].location != NSNotFound ||
+                                [((Node *)arrPhrase[i][noToken+3]).surface rangeOfString:@"申しあげ"].location != NSNotFound ||
+                                [((Node *)arrPhrase[i][noToken+3]).surface rangeOfString:@"もうしあげ"].location != NSNotFound ||
+                                [((Node *)arrPhrase[i][noToken+3]).surface rangeOfString:@"もうし上げ"].location != NSNotFound)&&
                                [((Node *)arrPhrase[i][noToken+3]).features[0] isEqualToString:@"動詞"]){
                                 
+                                //substitution
+                                //((Node *)arrPhrase[i][noToken+3]).surface = @"述べ";
+                                
+                                ((Node *)arrPhrase[i][noToken+3]).surface =
+                                [self replaceNoberu:((Node *)arrPhrase[i][noToken+3]).surface];
+                                
+                                /*上記コードと同値
+                                ((Node *)arrPhrase[i][noToken+3]).surface =
+                                [((Node *)arrPhrase[i][noToken+3]).surface
+                                 stringByReplacingOccurrencesOfString:@"申し上げ" withString:@"述べ"];
+                                
+                                
+                                ((Node *)arrPhrase[i][noToken+3]).surface =
+                                [((Node *)arrPhrase[i][noToken+3]).surface
+                                 stringByReplacingOccurrencesOfString:@"申しあげ" withString:@"述べ"];
+                                
+                                
+                                ((Node *)arrPhrase[i][noToken+3]).surface =
+                                [((Node *)arrPhrase[i][noToken+3]).surface
+                                 stringByReplacingOccurrencesOfString:@"もうしあげ" withString:@"述べ"];
+                                
+                                
+                                ((Node *)arrPhrase[i][noToken+3]).surface =
+                                [((Node *)arrPhrase[i][noToken+3]).surface
+                                 stringByReplacingOccurrencesOfString:@"もうし上げ" withString:@"述べ"];
+                                */
+                                
+                                
+                                break;//for-noToken
                             }
                         }
                     }
@@ -1198,8 +1232,502 @@ NSMutableArray *arrAllTokenNode;//重要語句、副詞、助詞、形容詞、�
         }
         
         
+        
+        //4.3.2:NV(サ変名詞)+を+申し上げる=>NVする
+        //4.3.2:NV(サ変名詞)+を+申し上げ=>NVし(：るが続かない時)
+        for(int i = 0;i < [arrPhrase count];i++){//各文節に対して
+            for(int noToken = 0;noToken < (int)[arrPhrase[i] count]-2;noToken++){//文節内の各トークンに対して(countが少なくとも3個以上ないとだめ:2=3-1)
+                
+                if([((Node *)arrPhrase[i][noToken]).features[0] isEqualToString:@"名詞"] &&
+                   [((Node *)arrPhrase[i][noToken]).features[1] isEqualToString:@"サ変接続"]){
+                    
+                    if([((Node *)arrPhrase[i][noToken+1]).surface isEqualToString:@"を"] &&
+                       [((Node *)arrPhrase[i][noToken+1]).features[0] isEqualToString:@"助詞"] &&
+                       [((Node *)arrPhrase[i][noToken+1]).features[1] isEqualToString:@"格助詞"]){
+                        
+                        if(
+                           (
+                            [((Node *)arrPhrase[i][noToken+2]).surface rangeOfString:@"申し上げる"].location != NSNotFound ||
+                            [((Node *)arrPhrase[i][noToken+2]).surface rangeOfString:@"申しあげる"].location != NSNotFound ||
+                            [((Node *)arrPhrase[i][noToken+2]).surface rangeOfString:@"もうしあげる"].location != NSNotFound ||
+                            [((Node *)arrPhrase[i][noToken+2]).surface rangeOfString:@"もうし上げる"].location != NSNotFound)&&
+                           [((Node *)arrPhrase[i][noToken+2]).features[0] isEqualToString:@"動詞"]){
+                            
+                            //substitution
+                            ((Node *)arrPhrase[i][noToken+2]).surface = @"する";
+                            break;//for-noToken
+                        }else if(
+                                 (
+                                  [((Node *)arrPhrase[i][noToken+2]).surface rangeOfString:@"申し上げ"].location != NSNotFound ||
+                                  [((Node *)arrPhrase[i][noToken+2]).surface rangeOfString:@"申しあげ"].location != NSNotFound ||
+                                  [((Node *)arrPhrase[i][noToken+2]).surface rangeOfString:@"もうしあげ"].location != NSNotFound ||
+                                  [((Node *)arrPhrase[i][noToken+2]).surface rangeOfString:@"もうし上げ"].location != NSNotFound)&&
+                                 [((Node *)arrPhrase[i][noToken+2]).features[0] isEqualToString:@"動詞"]){
+                            
+                            //substitution
+                            ((Node *)arrPhrase[i][noToken+2]).surface = @"し";
+                            break;//for-noToken
+                        }
+                    }
+                }
+            }
+        }
+        
+        //4.3.3:NV(サ変名詞)+申し上げる=>NVする
+        //4.3.3:NV(サ変名詞)+申し上げ=>NVし(：るが続かない時)
+        for(int i = 0;i < [arrPhrase count];i++){//各文節に対して
+            for(int noToken = 0;noToken < (int)[arrPhrase[i] count]-1;noToken++){//文節内の各トークンに対して(countが少なくとも2個以上ないとだめ:1=2-1)
+                
+                if([((Node *)arrPhrase[i][noToken]).features[0] isEqualToString:@"名詞"] &&
+                   [((Node *)arrPhrase[i][noToken]).features[1] isEqualToString:@"サ変接続"]){
+                    
+                    if(
+                       (
+                        [((Node *)arrPhrase[i][noToken+1]).surface rangeOfString:@"申し上げる"].location != NSNotFound ||
+                        [((Node *)arrPhrase[i][noToken+1]).surface rangeOfString:@"申しあげる"].location != NSNotFound ||
+                        [((Node *)arrPhrase[i][noToken+1]).surface rangeOfString:@"もうしあげる"].location != NSNotFound ||
+                        [((Node *)arrPhrase[i][noToken+1]).surface rangeOfString:@"もうし上げる"].location != NSNotFound)&&
+                       [((Node *)arrPhrase[i][noToken+1]).features[0] isEqualToString:@"動詞"]){
+                        
+                        //substitution
+                        ((Node *)arrPhrase[i][noToken+1]).surface = @"する";
+                        break;//for-noToken
+                    }else if(
+                             (
+                              [((Node *)arrPhrase[i][noToken+1]).surface rangeOfString:@"申し上げ"].location != NSNotFound ||
+                              [((Node *)arrPhrase[i][noToken+1]).surface rangeOfString:@"申しあげ"].location != NSNotFound ||
+                              [((Node *)arrPhrase[i][noToken+1]).surface rangeOfString:@"もうしあげ"].location != NSNotFound ||
+                              [((Node *)arrPhrase[i][noToken+1]).surface rangeOfString:@"もうし上げ"].location != NSNotFound)&&
+                             [((Node *)arrPhrase[i][noToken+1]).features[0] isEqualToString:@"動詞"]){
+                        
+                        //substitution
+                        ((Node *)arrPhrase[i][noToken+1]).surface = @"し";
+                        break;//for-noToken
+                    }
+                }
+            }
+        }
+        
+        
+        //4.3.4:お(ご)+動詞(連用形)+申し上げる=>NVする
+        /*
+         ご、お(接頭詞,名詞接続,*,*,*)
+         ＊＊(動詞,連用,*,*,*)
+         申し上げる(動詞,自立,*,*,一段)
+         */
+        for(int i = 0;i < [arrPhrase count];i++){//各文節に対して
+            for(int noToken = 0;noToken < (int)[arrPhrase[i] count]-2;noToken++){//文節内の各トークンに対して(countが少なくとも4個以上ないとだめ:2=3-1)
+                if((
+                    [((Node *)arrPhrase[i][noToken]).surface isEqualToString:@"お"] ||
+                    [((Node *)arrPhrase[i][noToken]).surface isEqualToString:@"ご"]) &&
+                   [((Node *)arrPhrase[i][noToken]).features[0] isEqualToString:@"接頭詞"] &&
+                   [((Node *)arrPhrase[i][noToken]).features[1] isEqualToString:@"名詞接続"]){
+                    
+                    if([((Node *)arrPhrase[i][noToken+1]).features[0] isEqualToString:@"動詞"] &&
+                       [((Node *)arrPhrase[i][noToken+1]).features[1] isEqualToString:@"自立"] &&
+                       [((Node *)arrPhrase[i][noToken+1]).features[5] isEqualToString:@"連用形"]
+                       ){
+                        
+                        if(
+                           (
+                            [((Node *)arrPhrase[i][noToken+2]).surface rangeOfString:@"申し上げる"].location != NSNotFound ||
+                            [((Node *)arrPhrase[i][noToken+2]).surface rangeOfString:@"申しあげる"].location != NSNotFound ||
+                            [((Node *)arrPhrase[i][noToken+2]).surface rangeOfString:@"もうしあげる"].location != NSNotFound ||
+                            [((Node *)arrPhrase[i][noToken+2]).surface rangeOfString:@"もうし上げる"].location != NSNotFound)&&
+                           [((Node *)arrPhrase[i][noToken+2]).features[0] isEqualToString:@"動詞"]){
+                            
+                            //substitution
+                            ((Node *)arrPhrase[i][noToken+2]).surface = @"する";
+                            break;//for-noToken
+                        }else if(
+                                 (
+                                  [((Node *)arrPhrase[i][noToken+2]).surface rangeOfString:@"申し上げ"].location != NSNotFound ||
+                                  [((Node *)arrPhrase[i][noToken+2]).surface rangeOfString:@"申しあげ"].location != NSNotFound ||
+                                  [((Node *)arrPhrase[i][noToken+2]).surface rangeOfString:@"もうしあげ"].location != NSNotFound ||
+                                  [((Node *)arrPhrase[i][noToken+2]).surface rangeOfString:@"もうし上げ"].location != NSNotFound)&&
+                                 [((Node *)arrPhrase[i][noToken+2]).features[0] isEqualToString:@"動詞"]){
+                            
+                            //substitution
+                            ((Node *)arrPhrase[i][noToken+2]).surface = @"し";
+                            break;//for-noToken
+                        }
+                    }
+                }
+            }
+        }
+        
+        
+        //4.3.5:お(ご)+名詞(一般、普通、その他)+申し上げる=>お「名詞」する
+        for(int i = 0;i < [arrPhrase count];i++){//各文節に対して
+            for(int noToken = 0;noToken < (int)[arrPhrase[i] count]-2;noToken++){//文節内の各トークンに対して(countが少なくとも4個以上ないとだめ:2=3-1)
+                if((
+                    [((Node *)arrPhrase[i][noToken]).surface isEqualToString:@"お"] ||
+                    [((Node *)arrPhrase[i][noToken]).surface isEqualToString:@"ご"]) &&
+                   [((Node *)arrPhrase[i][noToken]).features[0] isEqualToString:@"接頭詞"] &&
+                   [((Node *)arrPhrase[i][noToken]).features[1] isEqualToString:@"名詞接続"]){
+                    
+                    if([((Node *)arrPhrase[i][noToken+1]).features[0] isEqualToString:@"名詞"]){
+                        
+                        if(
+                           (
+                            [((Node *)arrPhrase[i][noToken+2]).surface rangeOfString:@"申し上げる"].location != NSNotFound ||
+                            [((Node *)arrPhrase[i][noToken+2]).surface rangeOfString:@"申しあげる"].location != NSNotFound ||
+                            [((Node *)arrPhrase[i][noToken+2]).surface rangeOfString:@"もうしあげる"].location != NSNotFound ||
+                            [((Node *)arrPhrase[i][noToken+2]).surface rangeOfString:@"もうし上げる"].location != NSNotFound)&&
+                           [((Node *)arrPhrase[i][noToken+2]).features[0] isEqualToString:@"動詞"]){
+                            
+                            //substitution
+                            ((Node *)arrPhrase[i][noToken+2]).surface = @"する";
+                            break;//for-noToken
+                        }else if(
+                                 (
+                                  [((Node *)arrPhrase[i][noToken+2]).surface rangeOfString:@"申し上げ"].location != NSNotFound ||
+                                  [((Node *)arrPhrase[i][noToken+2]).surface rangeOfString:@"申しあげ"].location != NSNotFound ||
+                                  [((Node *)arrPhrase[i][noToken+2]).surface rangeOfString:@"もうしあげ"].location != NSNotFound ||
+                                  [((Node *)arrPhrase[i][noToken+2]).surface rangeOfString:@"もうし上げ"].location != NSNotFound)&&
+                                 [((Node *)arrPhrase[i][noToken+2]).features[0] isEqualToString:@"動詞"]){
+                            
+                            //substitution
+                            ((Node *)arrPhrase[i][noToken+2]).surface = @"し";
+                            break;//for-noToken
+                        }
+                    }
+                }
+            }
+        }
+        
+        
+        //4.3.6:て申し上げる->て述べる
+        for(int i = 0;i < [arrPhrase count];i++){//各文節に対して
+            for(int noToken = 0;noToken < (int)[arrPhrase[i] count]-3;noToken++){//文節内の各トークンに対して(countが少なくとも4個以上ないとだめ:3=4-1)
+                if((
+                    [((Node *)arrPhrase[i][noToken]).surface isEqualToString:@"て"]) &&
+                    [((Node *)arrPhrase[i][noToken]).features[0] isEqualToString:@"助詞"] &&
+                    [((Node *)arrPhrase[i][noToken]).features[1] isEqualToString:@"接続助詞"]){
+                    
+                    if(
+                       (
+                        [((Node *)arrPhrase[i][noToken+2]).surface rangeOfString:@"申し上げる"].location != NSNotFound ||
+                        [((Node *)arrPhrase[i][noToken+2]).surface rangeOfString:@"申しあげる"].location != NSNotFound ||
+                        [((Node *)arrPhrase[i][noToken+2]).surface rangeOfString:@"もうしあげる"].location != NSNotFound ||
+                        [((Node *)arrPhrase[i][noToken+2]).surface rangeOfString:@"もうし上げる"].location != NSNotFound)&&
+                       [((Node *)arrPhrase[i][noToken+2]).features[0] isEqualToString:@"動詞"]){
+                        
+                        //substitution
+                        //((Node *)arrPhrase[i][noToken+2]).surface = @"述べる";
+                        ((Node *)arrPhrase[i][noToken+2]).surface =
+                        [self replaceNoberu:((Node *)arrPhrase[i][noToken+2]).surface];
+                        
+                        
+                        break;//for-noToken
+                    }else if(
+                             (
+                              [((Node *)arrPhrase[i][noToken+2]).surface rangeOfString:@"申し上げ"].location != NSNotFound ||
+                              [((Node *)arrPhrase[i][noToken+2]).surface rangeOfString:@"申しあげ"].location != NSNotFound ||
+                              [((Node *)arrPhrase[i][noToken+2]).surface rangeOfString:@"もうしあげ"].location != NSNotFound ||
+                              [((Node *)arrPhrase[i][noToken+2]).surface rangeOfString:@"もうし上げ"].location != NSNotFound)&&
+                             [((Node *)arrPhrase[i][noToken+2]).features[0] isEqualToString:@"動詞"]){
+                        
+                        //substitution
+                        //((Node *)arrPhrase[i][noToken+2]).surface = @"述べ";
+                        
+                        ((Node *)arrPhrase[i][noToken+2]).surface =
+                        [self replaceNoberu:((Node *)arrPhrase[i][noToken+2]).surface];
+                        break;//for-noToken
+                    }
+
+                }
+            }
+        }
+        
+        //4.3.7:申し上げ＋「、」->述べ＋「、」
+        for(int i = 0;i < [arrPhrase count];i++){//各文節に対して
+            for(int noToken = 0;noToken < (int)[arrPhrase[i] count]-1;noToken++){//文節内の各トークンに対して(countが少なくとも4個以上ないとだめ:1=2-1)
+                
+                if(
+                     (
+                      [((Node *)arrPhrase[i][noToken]).surface rangeOfString:@"申し上げ"].location != NSNotFound ||
+                      [((Node *)arrPhrase[i][noToken]).surface rangeOfString:@"申しあげ"].location != NSNotFound ||
+                      [((Node *)arrPhrase[i][noToken]).surface rangeOfString:@"もうしあげ"].location != NSNotFound ||
+                      [((Node *)arrPhrase[i][noToken]).surface rangeOfString:@"もうし上げ"].location != NSNotFound)&&
+                     [((Node *)arrPhrase[i][noToken]).features[0] isEqualToString:@"動詞"]){
+                    if([((Node *)arrPhrase[i][noToken+1]).surface isEqualToString:@"、"]){
+                        //substitution
+                        ((Node *)arrPhrase[i][noToken]).surface = @"述べ";
+                        ((Node *)arrPhrase[i][noToken]).surface =
+                        [self replaceNoberu:((Node *)arrPhrase[i][noToken]).surface];
+                        break;//for-noToken
+                    }
+                }
+            }
+        }
+        
+        
+        
+        //4.3.8:申し上げまして、=>述べまして
+        /*
+         *申し上げ(動詞,自立,*,*,一段):0
+         *まし(助動詞,*,*,*,特殊・マス):1
+         *て(助詞,接続助詞,*,*,*):2
+         *、(記号,読点,*,*,*):(3)
+         */
+        //※句読点不要？？？(削除済)
+        for(int i = 0;i < [arrPhrase count];i++){//各文節に対して
+            for(int noToken = 0;noToken < (int)[arrPhrase[i] count]-2;noToken++){//文節内の各トークンに対して(countが少なくとも4個以上ないとだめ:2=3-1)
+                
+                if(
+                   (
+                    [((Node *)arrPhrase[i][noToken]).surface rangeOfString:@"申し上げ"].location != NSNotFound ||
+                    [((Node *)arrPhrase[i][noToken]).surface rangeOfString:@"申しあげ"].location != NSNotFound ||
+                    [((Node *)arrPhrase[i][noToken]).surface rangeOfString:@"もうしあげ"].location != NSNotFound ||
+                    [((Node *)arrPhrase[i][noToken]).surface rangeOfString:@"もうし上げ"].location != NSNotFound)&&
+                   [((Node *)arrPhrase[i][noToken]).features[0] isEqualToString:@"動詞"]){
+                    
+                    if((
+                        [((Node *)arrPhrase[i][noToken+1]).surface isEqualToString:@"まし"]) &&
+                       [((Node *)arrPhrase[i][noToken+1]).features[0] isEqualToString:@"助動詞"]){
+                        
+                        
+                        if((
+                            [((Node *)arrPhrase[i][noToken+2]).surface isEqualToString:@"て"]) &&
+                           [((Node *)arrPhrase[i][noToken+2]).features[0] isEqualToString:@"助詞"] &&
+                           [((Node *)arrPhrase[i][noToken+2]).features[1] isEqualToString:@"接続助詞"]){
+                            
+                            //substitution
+                            //((Node *)arrPhrase[i][noToken]).surface = @"述べ";
+                            ((Node *)arrPhrase[i][noToken]).surface =
+                            [self replaceNoberu:((Node *)arrPhrase[i][noToken]).surface];
+                            break;//for-noToken
+                        }
+                    }
+                }
+            }
+        }
+        
+        
+        
+        //4.3.9:申し上げて、=>述べて、
+        /*
+         *申し上げ(動詞,自立,*,*,一段):0
+         *て(助詞,接続助詞,*,*,*):1
+         *、(記号,読点,*,*,*):(2)
+         */
+        //※句読点不要？？？(削除済)
+        for(int i = 0;i < [arrPhrase count];i++){//各文節に対して
+            for(int noToken = 0;noToken < (int)[arrPhrase[i] count]-1;noToken++){//文節内の各トークンに対して(countが少なくとも4個以上ないとだめ:1=2-1)
+                
+                if(
+                   (
+                    [((Node *)arrPhrase[i][noToken]).surface rangeOfString:@"申し上げ"].location != NSNotFound ||
+                    [((Node *)arrPhrase[i][noToken]).surface rangeOfString:@"申しあげ"].location != NSNotFound ||
+                    [((Node *)arrPhrase[i][noToken]).surface rangeOfString:@"もうしあげ"].location != NSNotFound ||
+                    [((Node *)arrPhrase[i][noToken]).surface rangeOfString:@"もうし上げ"].location != NSNotFound)&&
+                   [((Node *)arrPhrase[i][noToken]).features[0] isEqualToString:@"動詞"]){
+                    
+                    
+                    if((
+                        [((Node *)arrPhrase[i][noToken+2]).surface isEqualToString:@"て"]) &&
+                       [((Node *)arrPhrase[i][noToken+2]).features[0] isEqualToString:@"助詞"] &&
+                       [((Node *)arrPhrase[i][noToken+2]).features[1] isEqualToString:@"接続助詞"]){
+                        
+                        //substitution
+                        //((Node *)arrPhrase[i][noToken]).surface = @"述べ";
+                        ((Node *)arrPhrase[i][noToken]).surface =
+                        [self replaceNoberu:((Node *)arrPhrase[i][noToken]).surface];
+                        break;//for-noToken
+                    }
+                }
+            }
+        }
+        
+        
+        //4.3.10:申し上げさせ(る)=>述べさせ(る)
+        /*
+         *申し上げ(動詞,自立,*,*,一段):0
+         *させる(動詞,接尾,*,*,一段)
+         */
+        for(int i = 0;i < [arrPhrase count];i++){//各文節に対して
+            for(int noToken = 0;noToken < (int)[arrPhrase[i] count]-1;noToken++){//文節内の各トークンに対して(countが少なくとも2個以上ないとだめ:1=2-1)
+                
+                if(
+                   (
+                    [((Node *)arrPhrase[i][noToken]).surface rangeOfString:@"申し上げ"].location != NSNotFound ||
+                    [((Node *)arrPhrase[i][noToken]).surface rangeOfString:@"申しあげ"].location != NSNotFound ||
+                    [((Node *)arrPhrase[i][noToken]).surface rangeOfString:@"もうしあげ"].location != NSNotFound ||
+                    [((Node *)arrPhrase[i][noToken]).surface rangeOfString:@"もうし上げ"].location != NSNotFound)&&
+                   [((Node *)arrPhrase[i][noToken]).features[0] isEqualToString:@"動詞"]){
+                    
+                    
+                    if((
+                        [((Node *)arrPhrase[i][noToken+1]).surface isEqualToString:@"させ"]) &&
+                       [((Node *)arrPhrase[i][noToken+1]).features[0] isEqualToString:@"動詞"] &&
+                       [((Node *)arrPhrase[i][noToken+1]).features[1] isEqualToString:@"接尾"]){
+                        
+                        //substitution
+                        //((Node *)arrPhrase[i][noToken]).surface = @"述べ";
+                        ((Node *)arrPhrase[i][noToken]).surface =
+                        [self replaceNoberu:((Node *)arrPhrase[i][noToken]).surface];
+                        break;//for-noToken
+                    }
+                }
+            }
+        }
+        
+        //4.3.11:申し上げられ(る)=>言え(る)
+        /*
+         *申し上げ(動詞,自立,*,*,一段):0
+         *パターン１：られる(動詞,接尾,*,*,一段)
+         *パターン２：られ(動詞,接尾,*,*,一段) + [ず(助動詞,*,*,*,特殊・ヌ) or ない(助動詞,*,*,*,特殊・ナイ)]
+         
+         */
+        for(int i = 0;i < [arrPhrase count];i++){//各文節に対して
+            for(int noToken = 0;noToken < (int)[arrPhrase[i] count]-1;noToken++){//文節内の各トークンに対して(countが少なくとも2個以上ないとだめ:1=2-1)
+                
+                if(
+                   (
+                    [((Node *)arrPhrase[i][noToken]).surface rangeOfString:@"申し上げ"].location != NSNotFound ||
+                    [((Node *)arrPhrase[i][noToken]).surface rangeOfString:@"申しあげ"].location != NSNotFound ||
+                    [((Node *)arrPhrase[i][noToken]).surface rangeOfString:@"もうしあげ"].location != NSNotFound ||
+                    [((Node *)arrPhrase[i][noToken]).surface rangeOfString:@"もうし上げ"].location != NSNotFound)&&
+                   [((Node *)arrPhrase[i][noToken]).features[0] isEqualToString:@"動詞"]){
+                    
+                    if(
+                       [((Node *)arrPhrase[i][noToken+1]).surface rangeOfString:@"られ"].location != NSNotFound &&
+                       [((Node *)arrPhrase[i][noToken+1]).features[0] isEqualToString:@"動詞"] &&
+                       [((Node *)arrPhrase[i][noToken+1]).features[1] isEqualToString:@"接尾"]){
+                        NSLog(@"aaa:%@", ((Node *)arrPhrase[i][noToken+1]).surface);
+                        
+                        //(接尾)動詞「られ」を含むトークンを削除し、「申し上げ」を「言え」に変換：その後の助動詞「ず」、「ない」に対応するため
+                        ((Node *)arrPhrase[i][noToken]).surface =
+                        [((Node *)arrPhrase[i][noToken]).surface
+                         stringByReplacingOccurrencesOfString:@"申し上げ" withString:@"言え"];
+                        
+                        
+                        ((Node *)arrPhrase[i][noToken]).surface =
+                        [((Node *)arrPhrase[i][noToken]).surface
+                         stringByReplacingOccurrencesOfString:@"申しあげ" withString:@"言え"];
+                        
+                        
+                        ((Node *)arrPhrase[i][noToken]).surface =
+                        [((Node *)arrPhrase[i][noToken]).surface
+                         stringByReplacingOccurrencesOfString:@"もうしあげ" withString:@"言え"];
+                        
+                        
+                        ((Node *)arrPhrase[i][noToken]).surface =
+                        [((Node *)arrPhrase[i][noToken]).surface
+                         stringByReplacingOccurrencesOfString:@"もうし上げ" withString:@"言え"];
+                        
+                        //申し上げられる=>言える
+                        if([((Node *)arrPhrase[i][noToken+1]).surface isEqualToString:@"られる"]){
+                            ((Node *)arrPhrase[i][noToken+1]).surface = @"る";
+                        }else if([((Node *)arrPhrase[i][noToken+1]).surface isEqualToString:@"られ"]){
+                            //申し上げられない、申し上げられず=>言えない、言えず
+                            //この後(noToken+2)の言葉が助動詞「ず」「ない」等の可能性があるので(noTokenの)「られ」を含むトークンを削除
+                            NSLog(@"count=%d", [arrPhrase[i] count]);
+                            NSLog(@"arrphrase[%d][%d] = %@", i, noToken+1, ((Node *)arrPhrase[i][noToken+1]).surface);
+                            //[arrPhrase[i] removeObjectAtIndex:noToken+1];//arrPhraseの内部配列をmutableで定義しても削除出来ない？！
+                            //削除したいが削除出来ないのでやむなく空白文字とした
+                            ((Node *)arrPhrase[i][noToken+1]).surface = @"";
+                            
+                        }else{
+                            NSLog(@"られxxが認識されない");
+                        }
+                        
+                        break;//for-noToken
+                    }
+                }
+            }
+        }
+        
+        
+        //4.3.12その他申し上げるという表現がある場合は述べるに換言
+        for(int i = 0;i < [arrPhrase count];i++){//各文節に対して
+            for(int noToken = 0;noToken < (int)[arrPhrase[i] count];noToken++){//文節内の各トークンに対して(countが少なくとも2個以上ないとだめ:1=2-1)
+                
+                if(
+                   (//isEqualToStringでも等価
+                    [((Node *)arrPhrase[i][noToken]).surface rangeOfString:@"申し上げる"].location != NSNotFound ||
+                    [((Node *)arrPhrase[i][noToken]).surface rangeOfString:@"申しあげる"].location != NSNotFound ||
+                    [((Node *)arrPhrase[i][noToken]).surface rangeOfString:@"もうしあげる"].location != NSNotFound ||
+                    [((Node *)arrPhrase[i][noToken]).surface rangeOfString:@"もうし上げる"].location != NSNotFound)&&
+                   [((Node *)arrPhrase[i][noToken]).features[0] isEqualToString:@"動詞"]){
+                    
+                    ((Node *)arrPhrase[i][noToken]).surface =
+                    [((Node *)arrPhrase[i][noToken]).surface
+                     stringByReplacingOccurrencesOfString:@"申し上げる" withString:@"言う"];
+                    
+                    
+                    ((Node *)arrPhrase[i][noToken]).surface =
+                    [((Node *)arrPhrase[i][noToken]).surface
+                     stringByReplacingOccurrencesOfString:@"申しあげる" withString:@"言う"];
+                    
+                    
+                    ((Node *)arrPhrase[i][noToken]).surface =
+                    [((Node *)arrPhrase[i][noToken]).surface
+                     stringByReplacingOccurrencesOfString:@"もうしあげる" withString:@"言う"];
+                    
+                    
+                    ((Node *)arrPhrase[i][noToken]).surface =
+                    [((Node *)arrPhrase[i][noToken]).surface
+                     stringByReplacingOccurrencesOfString:@"もうし上げる" withString:@"言う"];
+                    
+                    //「申し上げ」＋「た」(助動詞,*,*,*,特殊・タ)という表現の場合
+                }else if(noToken + 1 < [arrPhrase[i] count]){
+                    if(
+                         ([((Node *)arrPhrase[i][noToken+1]).surface isEqualToString:@"た"])&&
+                         [((Node *)arrPhrase[i][noToken+1]).features[0] isEqualToString:@"助動詞"]){
+                        
+                        //助動詞「た」＝＞「言っ」＋「た」
+                        ((Node *)arrPhrase[i][noToken]).surface =
+                        [((Node *)arrPhrase[i][noToken]).surface
+                         stringByReplacingOccurrencesOfString:@"申し上げ" withString:@"言っ"];
+                        
+                        
+                        ((Node *)arrPhrase[i][noToken]).surface =
+                        [((Node *)arrPhrase[i][noToken]).surface
+                         stringByReplacingOccurrencesOfString:@"申しあげ" withString:@"言っ"];
+                        
+                        
+                        ((Node *)arrPhrase[i][noToken]).surface =
+                        [((Node *)arrPhrase[i][noToken]).surface
+                         stringByReplacingOccurrencesOfString:@"もうしあげ" withString:@"言っ"];
+                        
+                        
+                        ((Node *)arrPhrase[i][noToken]).surface =
+                        [((Node *)arrPhrase[i][noToken]).surface
+                         stringByReplacingOccurrencesOfString:@"もうし上げ" withString:@"言っ"];
+                        
+                        
+                    }else if([((Node *)arrPhrase[i][noToken+1]).surface isEqualToString:@"、"]){
+                        //読点「。」「、」の場合＝＞「言い」＋「、」
+                        
+                        ((Node *)arrPhrase[i][noToken]).surface =
+                        [((Node *)arrPhrase[i][noToken]).surface
+                         stringByReplacingOccurrencesOfString:@"申し上げ" withString:@"言い"];
+                        
+                        
+                        ((Node *)arrPhrase[i][noToken]).surface =
+                        [((Node *)arrPhrase[i][noToken]).surface
+                         stringByReplacingOccurrencesOfString:@"申しあげ" withString:@"言い"];
+                        
+                        
+                        ((Node *)arrPhrase[i][noToken]).surface =
+                        [((Node *)arrPhrase[i][noToken]).surface
+                         stringByReplacingOccurrencesOfString:@"もうしあげ" withString:@"言い"];
+                        
+                        
+                        ((Node *)arrPhrase[i][noToken]).surface =
+                        [((Node *)arrPhrase[i][noToken]).surface
+                         stringByReplacingOccurrencesOfString:@"もうし上げ" withString:@"言い"];
+                    }
+                }
+            }
+        }
+        
+        
         //確認用出力コード
         for(int i = 0;i < [arrPhrase count];i++){
+            NSLog(@"文節%d", i);
             for(int j = 0;j < [arrPhrase[i] count];j++){
                 NSLog(@"%@(%@,%@,%@,%@,%@)",
                       ((Node *)arrPhrase[i][j]).surface,
@@ -1569,6 +2097,7 @@ NSMutableArray *arrAllTokenNode;//重要語句、副詞、助詞、形容詞、�
         for(int i = 0 ;i < [_arrPhrase count]-1;i++){//最後の文節は「。」で終わるので判断せずに文節として認識するので最後まで判別しない
             //mecabで形態素解析
             NSArray *_arrNode = [self getNode:_arrPhrase[i]];
+            //NSMutableArray * _arrNode = (NSMutableArray *)[self getNode:_arrPhrase[i]];
             
             //テスト:文節で区切りたい文言を調べたいときに調べるため、文末の形態素を調べる
             NSLog(@"文節の末尾:%@=0%@,1%@,2%@,3%@,4%@,5%@,6%@,7%@,8%@",
@@ -1618,6 +2147,32 @@ NSMutableArray *arrAllTokenNode;//重要語句、副詞、助詞、形容詞、�
         
         return arrReturn;
     }
+}
+
+
+//引数の中にある「申し上げ」という文字列を「述べ」に換言
+-(NSString *)replaceNoberu:(NSString *)strArg{
+    
+    NSString *strReturn = strArg;
+    strReturn =[strReturn
+                stringByReplacingOccurrencesOfString:@"申し上げ"
+                withString:@"述べ"];
+    
+    strReturn =[strReturn
+                stringByReplacingOccurrencesOfString:@"申しあげ"
+                withString:@"述べ"];
+    
+    strReturn =[strReturn
+                stringByReplacingOccurrencesOfString:@"もうし上げ"
+                withString:@"述べ"];
+    
+    strReturn =[strReturn
+                stringByReplacingOccurrencesOfString:@"もうしあげ"
+                withString:@"述べ"];
+    
+    
+    
+    return strReturn;
 }
 
 
