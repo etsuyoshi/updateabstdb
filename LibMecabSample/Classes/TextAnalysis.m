@@ -2261,9 +2261,16 @@ NSMutableArray *arrAllTokenNode;//重要語句、副詞、助詞、形容詞、�
                       ((Node *)arrPhrase[i][j]).features[3],
                       ((Node *)arrPhrase[i][j]).features[4]
                       );
+                
+                //返す文字列を作成
+                
+                strAbst = [NSString stringWithFormat:@"%@%@",
+                           strAbst,((Node *)arrPhrase[i][j]).surface];
             }
         }
         
+        
+        return strAbst;//とりあえず、概要を作成して返す所までやったので、あとはそれを受取ったところでちゃんと処理してDBにアップする
         
         
         
