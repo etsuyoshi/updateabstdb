@@ -1002,7 +1002,8 @@ NSMutableArray *arrAllTokenNode;//重要語句、副詞、助詞、形容詞、�
 //        strOrigin = @"ウクライナで将来的に軍事衝突や信用収縮など「最悪」の事態が起きる可能性は小さいとの見方が多いものの、美しい、楽しいだけでは解決できないように、これは残念なことだけれども、しかしながら明日は我が身ということで先行きの不透明感は極めて濃く、多くの人は楽しみつつ、3月14日をピークに市場における緊張感が高まっているが、かならずやってくる。";//やってくる";
 //        strOrigin = @"武田信玄は光陰矢の如し動き、山のように動かなかった";
 //        strOrigin = @"俺が、頑張っているように、明日は曇るかもしれないけど、少し強気過ぎだけれども、ちょっと頑張ってますが、勉強していましたが、テストには受かったが、世の中が賞賛している。";
-        strOrigin = @"言って申し上げまして、俺は申し上げられないので、申し上げた。";//晴天に懇願を申し上げ、今日の来客のご連絡申し上げます";
+//        strOrigin = @"言って申し上げまして、俺は申し上げられないので、申し上げた。";//晴天に懇願を申し上げ、今日の来客のご連絡申し上げます";
+        strOrigin = @"あなたに来社していただきたいし、来社頂くのでそのつもりで。";
         
         NSMutableArray *arrReturn = [NSMutableArray array];
         NSArray *arrNodes = [self getNode:strOrigin];
@@ -1172,7 +1173,6 @@ NSMutableArray *arrAllTokenNode;//重要語句、副詞、助詞、形容詞、�
         }
         
         //4.3換言
-        NSLog(@"arrPhrase = %d", [arrPhrase count]);
         //4.3.1:「の(連体助詞)」+NV(サ変名詞)+を+申し上げ=>NVを述べ
         for(int i = 0;i < [arrPhrase count];i++){//各文節に対して
             for(int noToken = 0;noToken < (int)[arrPhrase[i] count]-3;noToken++){//文節内の各トークンに対して(countが少なくとも4個以上ないとだめ:3=4-1)
@@ -1595,7 +1595,7 @@ NSMutableArray *arrAllTokenNode;//重要語句、副詞、助詞、形容詞、�
                        [((Node *)arrPhrase[i][noToken+1]).surface rangeOfString:@"られ"].location != NSNotFound &&
                        [((Node *)arrPhrase[i][noToken+1]).features[0] isEqualToString:@"動詞"] &&
                        [((Node *)arrPhrase[i][noToken+1]).features[1] isEqualToString:@"接尾"]){
-                        NSLog(@"aaa:%@", ((Node *)arrPhrase[i][noToken+1]).surface);
+                        
                         
                         //(接尾)動詞「られ」を含むトークンを削除し、「申し上げ」を「言え」に変換：その後の助動詞「ず」、「ない」に対応するため
                         ((Node *)arrPhrase[i][noToken]).surface =
@@ -1725,6 +1725,207 @@ NSMutableArray *arrAllTokenNode;//重要語句、副詞、助詞、形容詞、�
         }
         
         
+        
+        //4.3.13:Vていただきたい=>Vてほしい
+        /*
+         来(動詞,自立,*,*,カ変・来ル)
+         て(助詞,接続助詞,*,*,*)
+         頂き(動詞,非自立,*,*,五段・カ行イ音便)
+         たい(助動詞,*,*,*,特殊・タイ)
+         
+         
+         来(動詞,自立,*,*,カ変・来ル)
+         て(助詞,接続助詞,*,*,*)
+         いただき(動詞,非自立,*,*,五段・カ行イ音便)
+         たく(助動詞,*,*,*,特殊・タイ)
+         ない(助動詞,*,*,*,特殊・ナイ)
+         */
+        
+        for(int i = 0;i < [arrPhrase count];i++){//各文節に対して
+            for(int noToken = 0;noToken < (int)[arrPhrase[i] count]-3;noToken++){//文節内の各トークンに対して(countが少なくとも4個以上ないとだめ:3=4-1)
+                
+                if([((Node *)arrPhrase[i][noToken]).features[0] isEqualToString:@"動詞"] &&
+                   [((Node *)arrPhrase[i][noToken+1]).surface isEqualToString:@"て"] &&
+                   ([((Node *)arrPhrase[i][noToken+2]).surface isEqualToString:@"頂き"] ||
+                    [((Node *)arrPhrase[i][noToken+2]).surface isEqualToString:@"いただき"])){
+                       
+                       
+                    if([((Node *)arrPhrase[i][noToken+3]).surface isEqualToString:@"たい"]){
+                        
+                        //(接尾)動詞「られ」を含むトークンを削除し、「申し上げ」を「言え」に変換：その後の助動詞「ず」、「ない」に対応するため
+                        ((Node *)arrPhrase[i][noToken+2]).surface =
+                        [((Node *)arrPhrase[i][noToken+2]).surface
+                         stringByReplacingOccurrencesOfString:@"頂き" withString:@"ほしい"];
+                        
+                        ((Node *)arrPhrase[i][noToken+2]).surface =
+                        [((Node *)arrPhrase[i][noToken+2]).surface
+                         stringByReplacingOccurrencesOfString:@"いただき" withString:@"ほしい"];
+                        
+                        //「たい」は空白文字に
+                        ((Node *)arrPhrase[i][noToken+3]).surface = @"";
+                        
+                        break;//for-noToken
+                    }else if([((Node *)arrPhrase[i][noToken+3]).surface isEqualToString:@"たく"]){
+                        //(接尾)動詞「られ」を含むトークンを削除し、「申し上げ」を「言え」に変換：その後の助動詞「ず」、「ない」に対応するため
+                        ((Node *)arrPhrase[i][noToken+2]).surface =
+                        [((Node *)arrPhrase[i][noToken+2]).surface
+                         stringByReplacingOccurrencesOfString:@"頂き" withString:@"ほしく"];
+                        
+                        ((Node *)arrPhrase[i][noToken+2]).surface =
+                        [((Node *)arrPhrase[i][noToken+2]).surface
+                         stringByReplacingOccurrencesOfString:@"いただき" withString:@"ほしく"];
+                        
+                        //「たい」は空白文字に
+                        ((Node *)arrPhrase[i][noToken+3]).surface = @"";
+                    }
+                }
+            }
+        }
+        
+        //4.3.14:Vていただく=>Vてもらう
+        /*
+         Vてもらわない
+         来(動詞,自立,*,*,カ変・来ル)
+         て(助詞,接続助詞,*,*,*)
+         いただか(動詞,非自立,*,*,五段・カ行イ音便)
+         例：ない(助動詞,*,*,*,特殊・ナイ)、ず
+         
+         Vてもらう
+         来(動詞,自立,*,*,カ変・来ル)
+         て(助詞,接続助詞,*,*,*)
+         いただく(動詞,非自立,*,*,五段・カ行イ音便)
+         */
+        
+        for(int i = 0;i < [arrPhrase count];i++){//各文節に対して
+            for(int noToken = 0;noToken < (int)[arrPhrase[i] count]-2;noToken++){//文節内の各トークンに対して(countが少なくとも4個以上ないとだめ:3=4-1)
+                
+                if([((Node *)arrPhrase[i][noToken]).features[0] isEqualToString:@"動詞"] &&
+                   [((Node *)arrPhrase[i][noToken+1]).surface isEqualToString:@"て"]){
+                    if(([((Node *)arrPhrase[i][noToken+2]).surface isEqualToString:@"頂か"] ||
+                        [((Node *)arrPhrase[i][noToken+2]).surface isEqualToString:@"いただか"])){
+                        
+                        
+                        
+                        ((Node *)arrPhrase[i][noToken+2]).surface =
+                        [((Node *)arrPhrase[i][noToken+2]).surface
+                         stringByReplacingOccurrencesOfString:@"頂か" withString:@"もらわ"];
+                        
+                        ((Node *)arrPhrase[i][noToken+2]).surface =
+                        [((Node *)arrPhrase[i][noToken+2]).surface
+                         stringByReplacingOccurrencesOfString:@"いただか" withString:@"もらわ"];
+                        
+                        
+                        break;//for-noToken
+                        
+                    }else if(([((Node *)arrPhrase[i][noToken+2]).surface isEqualToString:@"頂く"] ||
+                              [((Node *)arrPhrase[i][noToken+2]).surface isEqualToString:@"いただく"])){
+                        
+                        ((Node *)arrPhrase[i][noToken+2]).surface =
+                        [((Node *)arrPhrase[i][noToken+2]).surface
+                         stringByReplacingOccurrencesOfString:@"頂く" withString:@"もらう"];
+                        
+                        ((Node *)arrPhrase[i][noToken+2]).surface =
+                        [((Node *)arrPhrase[i][noToken+2]).surface
+                         stringByReplacingOccurrencesOfString:@"いただく" withString:@"もらう"];
+                        
+                        break;
+                        
+                    }else if(([((Node *)arrPhrase[i][noToken+2]).surface isEqualToString:@"頂け"] ||
+                              [((Node *)arrPhrase[i][noToken+2]).surface isEqualToString:@"いただけ"])){
+                        
+                        ((Node *)arrPhrase[i][noToken+2]).surface =
+                        [((Node *)arrPhrase[i][noToken+2]).surface
+                         stringByReplacingOccurrencesOfString:@"頂け" withString:@"もらえ"];
+                        
+                        ((Node *)arrPhrase[i][noToken+2]).surface =
+                        [((Node *)arrPhrase[i][noToken+2]).surface
+                         stringByReplacingOccurrencesOfString:@"いただけ" withString:@"もらえ"];
+                        
+                        break;
+                    }
+                }
+            }
+        }
+        
+        //4.3.15:NVいただきたい=>NVしてほしい
+        //4.3.16:NVいただく=>NVしてもらう
+        /*
+         来社(名詞,サ変接続,*,*,*)
+         頂き(動詞,自立,*,*,五段・カ行イ音便)
+         たい(助動詞,*,*,*,特殊・タイ)
+         
+         来社(名詞,サ変接続,*,*,*)
+         頂く(動詞,自立,*,*,五段・カ行ウ音便)
+         
+         */
+        
+        for(int i = 0;i < [arrPhrase count];i++){//各文節に対して
+            for(int noToken = 0;noToken < (int)[arrPhrase[i] count]-2;noToken++){//文節内の各トークンに対して(countが少なくとも3個以上ないとだめ:2=3-1)
+                
+                if([((Node *)arrPhrase[i][noToken]).features[0] isEqualToString:@"名詞"] &&
+                   [((Node *)arrPhrase[i][noToken]).features[1] isEqualToString:@"サ変接続"]){
+                    if(([((Node *)arrPhrase[i][noToken+1]).surface isEqualToString:@"頂き"] ||
+                        [((Node *)arrPhrase[i][noToken+1]).surface isEqualToString:@"いただき"])){
+                        //4.3.15
+                        if(([((Node *)arrPhrase[i][noToken+2]).surface isEqualToString:@"たい"] &&
+                            [((Node *)arrPhrase[i][noToken+2]).features[0] isEqualToString:@"助動詞"])){
+                            
+                            NSLog(@" hit");
+                            ((Node *)arrPhrase[i][noToken+1]).surface =
+                            [((Node *)arrPhrase[i][noToken+1]).surface
+                             stringByReplacingOccurrencesOfString:@"頂き" withString:@"して"];
+                            
+                            ((Node *)arrPhrase[i][noToken+1]).surface =
+                            [((Node *)arrPhrase[i][noToken+1]).surface
+                             stringByReplacingOccurrencesOfString:@"いただき" withString:@"して"];
+                            
+                            ((Node *)arrPhrase[i][noToken+2]).surface =
+                            [((Node *)arrPhrase[i][noToken+2]).surface
+                             stringByReplacingOccurrencesOfString:@"たい" withString:@"ほしい"];
+                            
+                            
+                            break;//for-noToken
+                            
+                        }else if(([((Node *)arrPhrase[i][noToken+3]).surface isEqualToString:@"たく"] ||
+                                  [((Node *)arrPhrase[i][noToken+3]).features[0] isEqualToString:@"助動詞"])){
+                            
+                            
+                            ((Node *)arrPhrase[i][noToken+2]).surface =
+                            [((Node *)arrPhrase[i][noToken+2]).surface
+                             stringByReplacingOccurrencesOfString:@"頂き" withString:@"して"];
+                            
+                            ((Node *)arrPhrase[i][noToken+2]).surface =
+                            [((Node *)arrPhrase[i][noToken+2]).surface
+                             stringByReplacingOccurrencesOfString:@"いただき" withString:@"して"];
+                            
+                            ((Node *)arrPhrase[i][noToken+3]).surface =
+                            [((Node *)arrPhrase[i][noToken+3]).surface
+                             stringByReplacingOccurrencesOfString:@"たく" withString:@"ほしく"];
+                            
+                            
+                            break;//for-noToken
+                            
+                        }
+                    }else if([((Node *)arrPhrase[i][noToken+1]).surface isEqualToString:@"頂く"] ||
+                              [((Node *)arrPhrase[i][noToken+1]).surface isEqualToString:@"いただく"]){
+                        //4.3.16:NV頂く=>NVしてもらう
+                        
+                        ((Node *)arrPhrase[i][noToken+1]).surface =
+                        [((Node *)arrPhrase[i][noToken+1]).surface
+                         stringByReplacingOccurrencesOfString:@"頂く" withString:@"してもらう"];
+                        
+                        ((Node *)arrPhrase[i][noToken+1]).surface =
+                        [((Node *)arrPhrase[i][noToken+1]).surface
+                         stringByReplacingOccurrencesOfString:@"いただく" withString:@"してもらう"];
+                        
+                        break;//for-noToken
+                        
+                    }
+                }
+            }
+        }
+        
+        
         //確認用出力コード
         for(int i = 0;i < [arrPhrase count];i++){
             NSLog(@"文節%d", i);
@@ -1740,6 +1941,7 @@ NSMutableArray *arrAllTokenNode;//重要語句、副詞、助詞、形容詞、�
             }
         }
         
+        NSLog(@"aaa");
         
         
         
