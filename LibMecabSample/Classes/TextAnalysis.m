@@ -1003,7 +1003,7 @@ NSMutableArray *arrAllTokenNode;//重要語句、副詞、助詞、形容詞、�
 //        strOrigin = @"武田信玄は光陰矢の如し動き、山のように動かなかった";
 //        strOrigin = @"俺が、頑張っているように、明日は曇るかもしれないけど、少し強気過ぎだけれども、ちょっと頑張ってますが、勉強していましたが、テストには受かったが、世の中が賞賛している。";
 //        strOrigin = @"言って申し上げまして、俺は申し上げられないので、申し上げた。";//晴天に懇願を申し上げ、今日の来客のご連絡申し上げます";
-        strOrigin = @"あなたに来社していただきたいし、来社頂くのでそのつもりで。";
+        strOrigin = @"申し訳ございませんで、申し訳ございませんでした、ご苦労でございましたね。";
         
         NSMutableArray *arrReturn = [NSMutableArray array];
         NSArray *arrNodes = [self getNode:strOrigin];
@@ -1870,7 +1870,6 @@ NSMutableArray *arrAllTokenNode;//重要語句、副詞、助詞、形容詞、�
                         if(([((Node *)arrPhrase[i][noToken+2]).surface isEqualToString:@"たい"] &&
                             [((Node *)arrPhrase[i][noToken+2]).features[0] isEqualToString:@"助動詞"])){
                             
-                            NSLog(@" hit");
                             ((Node *)arrPhrase[i][noToken+1]).surface =
                             [((Node *)arrPhrase[i][noToken+1]).surface
                              stringByReplacingOccurrencesOfString:@"頂き" withString:@"して"];
@@ -1926,6 +1925,330 @@ NSMutableArray *arrAllTokenNode;//重要語句、副詞、助詞、形容詞、�
         }
         
         
+        
+        //4.3.17:{の or と}NVをいただく=>{の or と}NVをもらう
+        //派生系:{の or と}NVをいただき=>{の or と}NVをもらい
+        //派生系:{の or と}NVをいただえ=>{の or と}NVをもらえ(たら、ず、ない)
+        for(int i = 0;i < [arrPhrase count];i++){//各文節に対して
+            for(int noToken = 0;noToken < (int)[arrPhrase[i] count]-3;noToken++){//文節内の各トークンに対して(countが少なくとも4個以上ないとだめ:3=4-1)
+                
+                if([((Node *)arrPhrase[i][noToken]).surface isEqualToString:@"の"] ||
+                   [((Node *)arrPhrase[i][noToken]).surface isEqualToString:@"と"]){
+                    
+                    
+                    if([((Node *)arrPhrase[i][noToken+1]).features[0] isEqualToString:@"名詞"] &&
+                       [((Node *)arrPhrase[i][noToken+1]).features[1] isEqualToString:@"サ変接続"]){
+                        if([((Node *)arrPhrase[i][noToken+2]).surface isEqualToString:@"を"]){
+                            if(([((Node *)arrPhrase[i][noToken+3]).surface isEqualToString:@"いただく"] ||
+                                [((Node *)arrPhrase[i][noToken+3]).surface isEqualToString:@"頂く"])){
+                                
+                                ((Node *)arrPhrase[i][noToken+3]).surface =
+                                [((Node *)arrPhrase[i][noToken+3]).surface
+                                 stringByReplacingOccurrencesOfString:@"頂く" withString:@"もらう"];
+                                
+                                ((Node *)arrPhrase[i][noToken+3]).surface =
+                                [((Node *)arrPhrase[i][noToken+3]).surface
+                                 stringByReplacingOccurrencesOfString:@"いただく" withString:@"もらう"];
+                                
+                                break;//for-noToken
+                            }else if(([((Node *)arrPhrase[i][noToken+3]).surface isEqualToString:@"いただけ"] ||
+                                      [((Node *)arrPhrase[i][noToken+3]).surface isEqualToString:@"頂け"])){
+                                
+                                ((Node *)arrPhrase[i][noToken+3]).surface =
+                                [((Node *)arrPhrase[i][noToken+3]).surface
+                                 stringByReplacingOccurrencesOfString:@"頂け" withString:@"もらえ"];
+                                
+                                ((Node *)arrPhrase[i][noToken+3]).surface =
+                                [((Node *)arrPhrase[i][noToken+3]).surface
+                                 stringByReplacingOccurrencesOfString:@"いただけ" withString:@"もらえ"];
+                                
+                                break;//for-noToken
+                            }else if(([((Node *)arrPhrase[i][noToken+3]).surface isEqualToString:@"いただき"] ||
+                                      [((Node *)arrPhrase[i][noToken+3]).surface isEqualToString:@"頂き"])){
+                                
+                                ((Node *)arrPhrase[i][noToken+3]).surface =
+                                [((Node *)arrPhrase[i][noToken+3]).surface
+                                 stringByReplacingOccurrencesOfString:@"頂き" withString:@"もらい"];
+                                
+                                ((Node *)arrPhrase[i][noToken+3]).surface =
+                                [((Node *)arrPhrase[i][noToken+3]).surface
+                                 stringByReplacingOccurrencesOfString:@"いただき" withString:@"もらい"];
+                                
+                                break;//for-noToken
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        
+        
+        //4.4.1:「と思います」は削除
+        //4.4.2:「と思う」は削除
+        //ただし、直前に「ない」が来る場合は適用外とする
+        /*
+         ***
+         と(助詞,格助詞,引用,*,*)
+         思い(動詞,自立,*,*,五段・ワ行促音便)
+         ます(助動詞,*,*,*,特殊・マス)
+         */
+        for(int i = 0;i < [arrPhrase count];i++){//各文節に対して
+            for(int noToken = 0;noToken < (int)[arrPhrase[i] count]-3;noToken++){//文節内の各トークンに対して(countが少なくとも4個以上ないとだめ:3=4-1)
+                //最初は「ない」で始まらずに、「と思います」は削除する
+                if(![((Node *)arrPhrase[i][noToken]).surface isEqualToString:@"ない"]){
+                    if([((Node *)arrPhrase[i][noToken+1]).features[1] isEqualToString:@"格助詞"] &&
+                       [((Node *)arrPhrase[i][noToken+1]).surface isEqualToString:@"と"]){//助詞
+                        if([((Node *)arrPhrase[i][noToken+2]).surface isEqualToString:@"思い"]){
+                            //4.4.1
+                            if([((Node *)arrPhrase[i][noToken+3]).surface isEqualToString:@"ます"]){
+                                ((Node *)arrPhrase[i][noToken+1]).surface = @"";
+                                ((Node *)arrPhrase[i][noToken+2]).surface = @"";
+                                ((Node *)arrPhrase[i][noToken+3]).surface = @"";
+                                break;//for-noToken
+                            }
+                        }else if([((Node *)arrPhrase[i][noToken+2]).surface isEqualToString:@"思う"]){
+                            //4.4.2
+                            ((Node *)arrPhrase[i][noToken+1]).surface = @"";
+                            ((Node *)arrPhrase[i][noToken+2]).surface = @"";
+                            break;//for-noToken
+                        }
+                            
+                            
+                    }
+                }
+            }
+        }
+        
+        
+        //4.5
+        
+        //4.5.1:Vわけでございまして=>Vが
+        //4.5.2:Vわけでありまして=>Vが
+        //ひらめき：Vの部分は助動詞でもいいはず＝＞「やっ」(動詞)＋「た」(助動詞)＋「わけでありまして」
+        /*
+         2014-03-29 12:19:44.219 UpdateAbstDB[39661:70b] いる(動詞,非自立,*,*,一段)
+         2014-03-29 12:19:44.219 UpdateAbstDB[39661:70b] わけ(名詞,非自立,一般,*,*)
+         2014-03-29 12:19:44.219 UpdateAbstDB[39661:70b] で(助動詞,*,*,*,特殊・ダ)
+         2014-03-29 12:19:44.220 UpdateAbstDB[39661:70b] ござい(助動詞,*,*,*,五段・ラ行特殊)
+         2014-03-29 12:19:44.220 UpdateAbstDB[39661:70b] まし(助動詞,*,*,*,特殊・マス)
+         2014-03-29 12:19:44.220 UpdateAbstDB[39661:70b] て(助詞,接続助詞,*,*,*)
+         */
+        for(int i = 0;i < [arrPhrase count];i++){//各文節に対して
+            for(int noToken = 0;noToken < (int)[arrPhrase[i] count]-5;noToken++){//文節内の各トークンに対して(countが少なくとも6個以上ないとだめ:5=6-1)
+                //最初は「ない」で始まらずに、「と思います」は削除する
+                if([((Node *)arrPhrase[i][noToken]).features[0] isEqualToString:@"動詞"] ||
+                   [((Node *)arrPhrase[i][noToken]).features[0] isEqualToString:@"助動詞"]){
+                    
+                    if([((Node *)arrPhrase[i][noToken+1]).surface isEqualToString:@"わけ"] &&
+                       [((Node *)arrPhrase[i][noToken+2]).surface isEqualToString:@"で"] &&//助動詞
+                       ([((Node *)arrPhrase[i][noToken+3]).surface isEqualToString:@"ござい"] ||
+                        [((Node *)arrPhrase[i][noToken+3]).surface isEqualToString:@"あり"]) &&
+                       [((Node *)arrPhrase[i][noToken+4]).surface isEqualToString:@"まし"] &&
+                       [((Node *)arrPhrase[i][noToken+5]).surface isEqualToString:@"て"]){
+                       
+                        ((Node *)arrPhrase[i][noToken+1]).surface = @"が";
+                        ((Node *)arrPhrase[i][noToken+2]).surface = @"";
+                        ((Node *)arrPhrase[i][noToken+3]).surface = @"";
+                        ((Node *)arrPhrase[i][noToken+4]).surface = @"";
+                        ((Node *)arrPhrase[i][noToken+5]).surface = @"";
+                        
+                        break;
+                        
+                    }
+                }
+            }
+        }
+        
+        
+        //4.5.3:Nでございまして＝＞Nで
+        //4.5.4:Nでありまして＝＞Nで
+        /*
+         2014-03-29 12:19:44.219 UpdateAbstDB[39661:70b] で(助動詞,*,*,*,特殊・ダ)
+         2014-03-29 12:19:44.220 UpdateAbstDB[39661:70b] ござい(助動詞,*,*,*,五段・ラ行特殊)
+         2014-03-29 12:19:44.220 UpdateAbstDB[39661:70b] まし(助動詞,*,*,*,特殊・マス)
+         2014-03-29 12:19:44.220 UpdateAbstDB[39661:70b] て(助詞,接続助詞,*,*,*)
+         */
+        for(int i = 0;i < [arrPhrase count];i++){//各文節に対して
+            for(int noToken = 0;noToken < (int)[arrPhrase[i] count]-4;noToken++){//文節内の各トークンに対して(countが少なくとも6個以上ないとだめ:4=5-1)
+                //最初は「ない」で始まらずに、「と思います」は削除する
+                if([((Node *)arrPhrase[i][noToken]).features[0] isEqualToString:@"名詞"]){
+                    
+                    if([((Node *)arrPhrase[i][noToken+1]).surface isEqualToString:@"で"] &&//助動詞
+                       ([((Node *)arrPhrase[i][noToken+2]).surface isEqualToString:@"ござい"] ||
+                        [((Node *)arrPhrase[i][noToken+2]).surface isEqualToString:@"あり"]) &&
+                       [((Node *)arrPhrase[i][noToken+3]).surface isEqualToString:@"まし"] &&
+                       [((Node *)arrPhrase[i][noToken+4]).surface isEqualToString:@"て"]){
+                        
+                        ((Node *)arrPhrase[i][noToken+1]).surface = @"で";//なくてもよい
+                        ((Node *)arrPhrase[i][noToken+2]).surface = @"";
+                        ((Node *)arrPhrase[i][noToken+3]).surface = @"";
+                        ((Node *)arrPhrase[i][noToken+4]).surface = @"";
+                        
+                        break;
+                    }
+                }
+            }
+        }
+        
+        //4.5.5:でございます(+P)＝＞です
+        //4.5.6:であります(+P)＝＞です
+        for(int i = 0;i < [arrPhrase count];i++){//各文節に対して
+            for(int noToken = 0;noToken < (int)[arrPhrase[i] count]-2;noToken++){//文節内の各トークンに対して(countが少なくとも6個以上ないとだめ:2=3-1)
+                if([((Node *)arrPhrase[i][noToken]).surface isEqualToString:@"で"] &&//助動詞
+                   ([((Node *)arrPhrase[i][noToken+1]).surface isEqualToString:@"ござい"] ||
+                    [((Node *)arrPhrase[i][noToken+1]).surface isEqualToString:@"あり"]) &&
+                   [((Node *)arrPhrase[i][noToken+2]).surface isEqualToString:@"ます"]){
+                    
+                    ((Node *)arrPhrase[i][noToken]).surface = @"です";
+                    ((Node *)arrPhrase[i][noToken+1]).surface = @"";
+                    ((Node *)arrPhrase[i][noToken+2]).surface = @"";
+                    
+                    
+                    //続くトークンがあり、それが助詞であれば除外する
+                    if(noToken+3 < (int)[arrPhrase[i] count]){
+                        if([((Node *)arrPhrase[i][noToken+3]).features[0] isEqualToString:@"助詞"]){
+                            ((Node *)arrPhrase[i][noToken+3]).surface = @"";
+                        }
+                    }
+                    
+                    break;
+                }
+            }
+        }
+        
+        //4.5.7:わけでございます=>削除
+        //4.5.8:わけであります=>削除
+        for(int i = 0;i < [arrPhrase count];i++){//各文節に対して
+            for(int noToken = 0;noToken < (int)[arrPhrase[i] count]-3;noToken++){//文節内の各トークンに対して(countが少なくとも4個以上ないとだめ:3=4-1)
+                if(([((Node *)arrPhrase[i][noToken]).surface isEqualToString:@"わけ"] ||
+                    [((Node *)arrPhrase[i][noToken]).surface isEqualToString:@"訳"]) &&
+                   [((Node *)arrPhrase[i][noToken+1]).surface isEqualToString:@"で"] &&//助動詞
+                   ([((Node *)arrPhrase[i][noToken+2]).surface isEqualToString:@"ござい"] ||
+                    [((Node *)arrPhrase[i][noToken+2]).surface isEqualToString:@"あり"]) &&
+                   [((Node *)arrPhrase[i][noToken+3]).surface isEqualToString:@"ます"]){
+                    
+                    ((Node *)arrPhrase[i][noToken]).surface = @"";
+                    ((Node *)arrPhrase[i][noToken+1]).surface = @"";
+                    ((Node *)arrPhrase[i][noToken+2]).surface = @"";
+                    ((Node *)arrPhrase[i][noToken+3]).surface = @"";
+                    break;
+                }
+            }
+        }
+        
+        //4.5.9:ございませんでした=>なかった
+        //(派生形)ありませんでした=>なかった
+        /*
+         2014-03-29 12:48:38.298 UpdateAbstDB[51656:70b] ござい(助動詞,*,*,*,五段・ラ行特殊)
+         2014-03-29 12:48:38.299 UpdateAbstDB[51656:70b] ませ(助動詞,*,*,*,特殊・マス)
+         2014-03-29 12:48:38.299 UpdateAbstDB[51656:70b] ん(助動詞,*,*,*,不変化型)
+         2014-03-29 12:48:38.299 UpdateAbstDB[51656:70b] でし(助動詞,*,*,*,特殊・デス)
+         2014-03-29 12:48:38.300 UpdateAbstDB[51656:70b] た(助動詞,*,*,*,特殊・タ)
+         */
+        for(int i = 0;i < [arrPhrase count];i++){//各文節に対して
+            for(int noToken = 0;noToken < (int)[arrPhrase[i] count]-4;noToken++){//文節内の各トークンに対して(countが少なくとも5個以上ないとだめ:4=5-1)
+                if(([((Node *)arrPhrase[i][noToken]).surface isEqualToString:@"ござい"] ||
+                    [((Node *)arrPhrase[i][noToken+1]).surface isEqualToString:@"あり"]) &&
+                   [((Node *)arrPhrase[i][noToken+1]).surface isEqualToString:@"ませ"] &&
+                   [((Node *)arrPhrase[i][noToken+2]).surface isEqualToString:@"ん"]){
+                    if([((Node *)arrPhrase[i][noToken+3]).surface isEqualToString:@"でし"] &&
+                       [((Node *)arrPhrase[i][noToken+4]).surface isEqualToString:@"た"]){
+                            
+                        ((Node *)arrPhrase[i][noToken]).surface = @"";
+                        ((Node *)arrPhrase[i][noToken+1]).surface = @"";
+                        ((Node *)arrPhrase[i][noToken+2]).surface = @"";
+                        ((Node *)arrPhrase[i][noToken+3]).surface = @"なかっ";
+                        ((Node *)arrPhrase[i][noToken+4]).surface = @"た";//なくてもよい
+                        break;
+                    }
+                }
+            }
+        }
+        
+        //4.5.10:ございませんで=>なく
+        for(int i = 0;i < [arrPhrase count];i++){//各文節に対して
+            for(int noToken = 0;noToken < (int)[arrPhrase[i] count]-3;noToken++){//文節内の各トークンに対して(countが少なくとも4個以上ないとだめ:3=4-1)
+                if(([((Node *)arrPhrase[i][noToken]).surface isEqualToString:@"ござい"] ||
+                    [((Node *)arrPhrase[i][noToken+1]).surface isEqualToString:@"あり"]) &&
+                   [((Node *)arrPhrase[i][noToken+1]).surface isEqualToString:@"ませ"] &&
+                   [((Node *)arrPhrase[i][noToken+2]).surface isEqualToString:@"ん"]){
+                    
+                    if([((Node *)arrPhrase[i][noToken+3]).surface isEqualToString:@"で"]){
+                        //ございませんで=>なく
+                        ((Node *)arrPhrase[i][noToken]).surface = @"";
+                        ((Node *)arrPhrase[i][noToken+1]).surface = @"";
+                        ((Node *)arrPhrase[i][noToken+2]).surface = @"なく";
+                        ((Node *)arrPhrase[i][noToken+3]).surface = @"";
+                    }
+                }
+            }
+        }
+        
+        //4.5.11:ございません=>ない
+        for(int i = 0;i < [arrPhrase count];i++){//各文節に対して
+            for(int noToken = 0;noToken < (int)[arrPhrase[i] count]-2;noToken++){//文節内の各トークンに対して(countが少なくとも3個以上ないとだめ:2=3-1)
+                if(([((Node *)arrPhrase[i][noToken]).surface isEqualToString:@"ござい"] ||
+                    [((Node *)arrPhrase[i][noToken+1]).surface isEqualToString:@"あり"]) &&
+                   [((Node *)arrPhrase[i][noToken+1]).surface isEqualToString:@"ませ"] &&
+                   [((Node *)arrPhrase[i][noToken+2]).surface isEqualToString:@"ん"]){
+                    //ございません=>ない
+                    ((Node *)arrPhrase[i][noToken]).surface = @"";
+                    ((Node *)arrPhrase[i][noToken+1]).surface = @"";
+                    ((Node *)arrPhrase[i][noToken+2]).surface = @"ない";
+                }
+            }
+        }
+        
+        //4.5.12:でございました(+P)=>でした
+        for(int i = 0;i < [arrPhrase count];i++){//各文節に対して
+            for(int noToken = 0;noToken < (int)[arrPhrase[i] count]-3;noToken++){//文節内の各トークンに対して(countが少なくとも3個以上ないとだめ:2=3-1)
+                if([((Node *)arrPhrase[i][noToken]).surface isEqualToString:@"で"] &&
+                   ([((Node *)arrPhrase[i][noToken+1]).surface isEqualToString:@"ござい"] ||
+                    [((Node *)arrPhrase[i][noToken+1]).surface isEqualToString:@"あり"]) &&
+                   [((Node *)arrPhrase[i][noToken+2]).surface isEqualToString:@"まし"] &&
+                   [((Node *)arrPhrase[i][noToken+3]).surface isEqualToString:@"た"]){
+                    
+                    ((Node *)arrPhrase[i][noToken]).surface = @"でし";
+                    ((Node *)arrPhrase[i][noToken+1]).surface = @"";
+                    ((Node *)arrPhrase[i][noToken+2]).surface = @"";
+                    ((Node *)arrPhrase[i][noToken+3]).surface = @"た";
+                    
+                    //助詞が続く場合には削除する
+                    if(noToken+4 < (int)[arrPhrase[i] count]){
+                        if([((Node *)arrPhrase[i][noToken+4]).features[0] isEqualToString:@"助詞"]){
+                            ((Node *)arrPhrase[i][noToken+4]).surface = @"";
+                        }
+                    }
+                    break;
+                }
+            }
+        }
+        
+        
+        //4.5.13:ございました(+P)=>あった
+        for(int i = 0;i < [arrPhrase count];i++){//各文節に対して
+            for(int noToken = 0;noToken < (int)[arrPhrase[i] count]-3;noToken++){//文節内の各トークンに対して(countが少なくとも3個以上ないとだめ:2=3-1)
+                if(([((Node *)arrPhrase[i][noToken]).surface isEqualToString:@"ござい"] ||
+                    [((Node *)arrPhrase[i][noToken]).surface isEqualToString:@"あり"]) &&
+                   [((Node *)arrPhrase[i][noToken+1]).surface isEqualToString:@"まし"] &&
+                   [((Node *)arrPhrase[i][noToken+2]).surface isEqualToString:@"た"]){
+                    
+                    ((Node *)arrPhrase[i][noToken]).surface = @"あっ";
+                    ((Node *)arrPhrase[i][noToken+1]).surface = @"";
+                    ((Node *)arrPhrase[i][noToken+2]).surface = @"た";
+                    
+                    //助詞が続く場合には削除する
+                    if(noToken+3 < (int)[arrPhrase[i] count]){
+                        if([((Node *)arrPhrase[i][noToken+3]).features[0] isEqualToString:@"助詞"]){
+                            ((Node *)arrPhrase[i][noToken+3]).surface = @"";
+                        }
+                    }
+                    break;
+                }
+            }
+        }
+        
         //確認用出力コード
         for(int i = 0;i < [arrPhrase count];i++){
             NSLog(@"文節%d", i);
@@ -1941,7 +2264,6 @@ NSMutableArray *arrAllTokenNode;//重要語句、副詞、助詞、形容詞、�
             }
         }
         
-        NSLog(@"aaa");
         
         
         
