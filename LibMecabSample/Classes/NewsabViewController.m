@@ -678,7 +678,7 @@ foundCharacters:(NSString *)string
     // 作成した文字列をUTF-8で符号化する
     NSData *data;
     data = [str dataUsingEncoding:NSUTF8StringEncoding];
-    NSLog(@"str = %@", str);//ex.str = id=1&item=title
+    NSLog(@"str = %@ from newsabviewcontroller", str);//ex.str = id=1&item=title
     NSLog(@"return data = %@", data);//ex.return data = <69643d31 26697465 6d3d7469 746c65>
     return data;
 }

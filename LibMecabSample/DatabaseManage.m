@@ -163,19 +163,36 @@
 
 +(Boolean)updateValueToDB:(NSString *)user_id
                    column:(NSString *)column
-                   newVal:(NSString *)newValue{
-    //他の値を更新しないようにチェック
+                   newVal:(NSString *)newValue_arg{
+    
+    //他の値を更新しないように(念のため)チェック:abstforblogは更新すべきだよね？
     if(!([column isEqualToString:@"abstforblog"] ||
-         [column isEqualToString:@"ispostblog"])){
-        NSLog(@"column error");
+         [column isEqualToString:@"keywordblog"])){
+        NSLog(@"column error %@", column);
         return false;
     }
+    
+    //文字列にシングルクオーテーション「'」がある場合には除外する(sqlの文字列終了記号なので誤った実行がされてしまう)
+    //仮対応：本来ならシングルクオーテーション単体で存在する場合はエスケープシーケンスを付与。
+    NSString *_newValue = newValue_arg;
+    if([_newValue rangeOfString:@"\'"].location != NSNotFound){
+        NSLog(@"シングルクオーテーションが存在しています");
+        NSLog(@"修正前newValue = %@", newValue_arg);
+        //未対応！：なぜか以下でシングルクオーテーションをシングルクオートx２「''」に変換できない！！理由不明！！
+        [_newValue stringByReplacingOccurrencesOfString:@"\'"
+                                            withString:@"''"];
+        
+        NSLog(@"修正後newValue = %@", _newValue);
+    }
+    
+    
+    
     
     //実行sql：$sql = "update dbusermanage SET $_POST[column] = '$_POST[value]' WHERE id = '$_POST[id]'";
     NSMutableDictionary *dict = [NSMutableDictionary dictionaryWithCapacity:0];
     [dict setObject:user_id forKey:@"id"];
     [dict setObject:column forKey:@"column"];
-    [dict setObject:newValue forKey:@"value"];
+    [dict setObject:_newValue forKey:@"value"];
     NSData *data = [self formEncodedDataFromDictionary:dict];
     //下記更新必要
 //    NSURL *url = [NSURL URLWithString:@"http://satoshi.upper.jp/user/shooting/updatevalue.php"];
@@ -189,17 +206,32 @@
     NSData *result = [NSURLConnection sendSynchronousRequest:req
                                            returningResponse:&response
                                                        error:&error];
+    
+    
+    NSString* resultString;
+    
     if(error){
         NSLog(@"同期通信失敗 at updateValueToDB");
         return false;
     }else{
         NSLog(@"同期通信成功");
+        
+        
+        resultString = [[NSString alloc]
+                        initWithData:result
+                        encoding:NSUTF8StringEncoding];//phpファイルのechoが返って来る
+        
+        //errorが発生しない場合でも発行した文字列によってはsqlによる更新が出来ていない場合がある
+        //例えば、文字列の中にシングルクオーテーションがあってsqlが実行されない場合等(本ケースは対応済)
+        if([resultString rangeOfString:@"You have an error in your SQL syntax"].location != NSNotFound){
+            NSLog(@"シンタックスエラーが発生したので更新できませんでした(シングルクオートがあると生成できない可能性があります)。詳細：%@", resultString);
+            return false;
+        }
     }
     
     
-    NSString* resultString = [[NSString alloc] initWithData:result
-                                                   encoding:NSUTF8StringEncoding];//phpファイルのechoが返って来る
-    NSLog(@"userDB : updated : php comment = %@", resultString);
+    
+    NSLog(@"DB-updated from DatabaseManage: php comment = %@", resultString);
     
     
     
@@ -246,7 +278,7 @@
     // 作成した文字列をUTF-8で符号化する
     NSData *data;
     data = [str dataUsingEncoding:NSUTF8StringEncoding];
-    NSLog(@"str = %@", str);//ex.str = id=1&item=title
+    NSLog(@"str = %@ from databasemanage.m", str);//ex.str = id=1&item=title
     NSLog(@"return data(NSData型) = %@", data);//ex.return data = <69643d31 26697465 6d3d7469 746c65>
     return data;
 }

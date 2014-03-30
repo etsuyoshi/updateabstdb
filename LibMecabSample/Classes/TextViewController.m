@@ -66,6 +66,7 @@ UIButton *uploadButton;//ブログへアップロードする
             _strText = articleData.arrImportantSentence[0];//temporary
         }else{
 //            _strText = _arrRandomWord[arc4random() % [_arrRandomWord count]];
+            NSLog(@"重要文章がarticleDataから取得できません。@TextViewController");
         }
         for(int i = 1;i < [articleData.arrImportantSentence count];i++){
             _strText = [NSString stringWithFormat:
@@ -320,7 +321,8 @@ clickedButtonAtIndex:(NSInteger)buttonIndex {
 }
 
 -(void)updateToDB{
-    NSLog(@"update:%@", self.strKeyword);
+    NSLog(@"update:abstract=%@", self.strText);
+    NSLog(@"update:keyword=%@", self.strKeyword);
     [DatabaseManage
      updateValueToDB:[NSString stringWithFormat:@"%d",self.idNo]
      column:@"abstforblog"
@@ -329,7 +331,7 @@ clickedButtonAtIndex:(NSInteger)buttonIndex {
     [DatabaseManage
      updateValueToDB:[NSString stringWithFormat:@"%d",self.idNo]
      column:@"keywordblog"
-     newVal:self.strText];//キーワードを結合したもの
+     newVal:self.strKeyword];//キーワードを結合したもの
     
     //本来ならこの後にカテゴリを追加する
     //...

@@ -6,7 +6,7 @@
 //  Copyright (c) 2014年 endo.news. All rights reserved.
 //
 
-#define ABSTRACTION_TEST
+//#define ABSTRACTION_TEST
 
 #define DispDatabaseLog
 #define MaxRecordEveryPage 4
@@ -153,10 +153,6 @@ int noStatus;//現在の状態(どの区切りか)を判別:最初は一番左�
     _noID = [[dictTmp objectForKey:@"id"] integerValue];
     NSLog(@"strTmp = %@", strReturnBody);
     
-    //テストデータ格納
-//    NSString *strReturnBody = @"aaa";
-//    NSString *strTitle = @"title";
-    
     
     TextAnalysis *textAnalysis = [[TextAnalysis alloc]
                                   initWithText:strReturnBody
@@ -174,7 +170,7 @@ int noStatus;//現在の状態(どの区切りか)を判別:最初は一番左�
         NSLog(@"arrImpSntc[%d]=%@", i, arrImportantSentence[i]);
     }
     
-    NSLog(@"exit");
+    NSLog(@"abstraction test mode exit@viewDidAppear from ViewController");
     
 #else
     
@@ -201,6 +197,7 @@ int noStatus;//現在の状態(どの区切りか)を判別:最初は一番左�
     
     
     int _noID = 100000;//最後にアップデートしたIDを格納しておく
+    
     for(int i = 0 ;i < [arrTable count];i++){//全てのテーブル(画面)に対して
         _noID = 100000;//最後にアップデートしたIDを格納しておく
         //カテゴリ番号を取得する：ユーザーによって並べ替えられている
@@ -222,10 +219,33 @@ int noStatus;//現在の状態(どの区切りか)を判別:最初は一番左�
             
             
             //ループで新しい記事から_noIDを取得していく
-            _noID = [DatabaseManage
-                     getLastIDFromDBUnder:_noID
-                     category:category];
+//            _noID = [DatabaseManage
+//                     getLastIDFromDBUnder:_noID
+//                     category:category];
             
+            NSNumber *_noIDNumber =
+            [NSNumber numberWithInt:
+             [DatabaseManage
+             getLastIDFromDBUnder:_noID
+             category:category]];
+            
+            
+            if(_noIDNumber== nil ||
+               [_noIDNumber isEqual:[NSNull null]]){
+                
+                NSLog(@"idが取得出来ませんでした。終了します。");
+                return;
+            }else{
+                if(_noID != [_noIDNumber intValue]){
+                    NSLog(@"前回取得id%d, 今回%d", [_noIDNumber intValue], _noID);
+                    _noID = [_noIDNumber intValue];
+                }else{
+                    NSLog(@"前回取得したidと同じ番号%dを取得したので終了します", _noID);
+                    return;
+                }
+                
+//                NSLog(@"取得したidは%d", _noID);
+            }
             //    @"id",
             //    @"datetime",
             //    @"blog_id",
@@ -353,6 +373,7 @@ int noStatus;//現在の状態(どの区切りか)を判別:最初は一番左�
 }
 
 -(void)dispNextViewController:(int)noTapped{
+    NSLog(@"dispNextViewController from ViewController");
     TextViewController *tvcon =
     [[TextViewController alloc]
      initWithArticle:(ArticleData *)arrArticleData[noTapped]];

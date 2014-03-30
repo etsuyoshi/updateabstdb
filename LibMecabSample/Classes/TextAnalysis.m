@@ -948,14 +948,11 @@ NSMutableArray *arrAllTokenNode;//重要語句、副詞、助詞、形容詞、�
             //重要文章の格納:順番通りになっていないが、必ずしも上位語句では順位自体が重要とは限らない
             [arrImportantSentence
              addObject:arrSentence[i]];
-            
-            
-            
+
             //重要語句を作成するために一旦、停止
             //文章から要約文を生成してarrAbstractSentenceに格納
             [arrAbstractSentence
              addObject:[self createAbstract:arrSentence[i]]];
-            
         }
     }
     
@@ -998,12 +995,14 @@ NSMutableArray *arrAllTokenNode;//重要語句、副詞、助詞、形容詞、�
     @autoreleasepool {
         NSString *strAbst = @"";
         
-        //test*************
+        //test*************テストケースの作成
 //        strOrigin = @"ウクライナで将来的に軍事衝突や信用収縮など「最悪」の事態が起きる可能性は小さいとの見方が多いものの、美しい、楽しいだけでは解決できないように、これは残念なことだけれども、しかしながら明日は我が身ということで先行きの不透明感は極めて濃く、多くの人は楽しみつつ、3月14日をピークに市場における緊張感が高まっているが、かならずやってくる。";//やってくる";
 //        strOrigin = @"武田信玄は光陰矢の如し動き、山のように動かなかった";
 //        strOrigin = @"俺が、頑張っているように、明日は曇るかもしれないけど、少し強気過ぎだけれども、ちょっと頑張ってますが、勉強していましたが、テストには受かったが、世の中が賞賛している。";
 //        strOrigin = @"言って申し上げまして、俺は申し上げられないので、申し上げた。";//晴天に懇願を申し上げ、今日の来客のご連絡申し上げます";
-        strOrigin = @"申し訳ございませんで、申し訳ございませんでした、ご苦労でございましたね。";
+//        strOrigin = @"申し訳ございませんで、申し訳ございませんでした、ご苦労でございましたね。";
+        
+//        strOrigin = @"だがやっているし、あすやっているのだが、やって更新する。";
         
         NSMutableArray *arrReturn = [NSMutableArray array];
         NSArray *arrNodes = [self getNode:strOrigin];
@@ -1012,22 +1011,22 @@ NSMutableArray *arrAllTokenNode;//重要語句、副詞、助詞、形容詞、�
         
         //5w1hに変換
         
-        NSString *who;
+//        NSString *who;
         //市場
         
-        NSString *what;
+//        NSString *what;
         //やってくる、高まっている
         
-        NSString *when;
+//        NSString *when;
         //3月14日をピークに:日付データの後に「に(助詞,格助詞,一般,*)」、「における、において」がある場合はwhen
         
-        NSString *where;
+//        NSString *where;
         //地名データを文章から探す。
         
-        NSString *why;
+//        NSString *why;
         //文章全体から「だから、なぜなら」、等の理由を取得
         
-        NSString *how;
+//        NSString *how;
         //文章全体から、「によって」、「を使って」を拾ってくる
         
         //軍事衝突や信用収縮など「最悪」の事態が起きる可能性は小さいとの見方が多いものの、先行きの不透明感は極めて濃く、市場における緊張感が高まっている
@@ -1054,7 +1053,10 @@ NSMutableArray *arrAllTokenNode;//重要語句、副詞、助詞、形容詞、�
             
             //各文節において最後の形態素(読点)のid番号を取得する
             int cntArrPhrase_i = [arrPhrase[i] count];
-            
+            if([arrPhrase[i] count] == 0){
+                NSLog(@"%dにおいてトークンが存在しません", i);
+                continue;
+            }
             //4.1.1-3：挨拶文の削除
             if([((Node *)(arrPhrase[i][0])).surface isEqualToString:@"おはようございます。"] ||
                [((Node *)arrPhrase[i][0]).surface isEqualToString:@"お帰りなさい。"] ||
@@ -1070,42 +1072,47 @@ NSMutableArray *arrAllTokenNode;//重要語句、副詞、助詞、形容詞、�
             
             
             
-            
+            NSLog(@"count=%d", [arrPhrase[i] count]);
             
             //4.2.1-7:判別に必要な個数だけあることを担保する必要がある
             if(
                (//4.2.1：ように
                 [((Node *)(arrPhrase[i][(cntArrPhrase_i>4?cntArrPhrase_i:3)-3])).surface isEqualToString:@"よう"] &&
-                [((Node *)(arrPhrase[i][cntArrPhrase_i-2])).surface isEqualToString:@"に"]
+                [((Node *)(arrPhrase[i][(cntArrPhrase_i>3?cntArrPhrase_i:2)-2])).surface isEqualToString:@"に"]
                 )
                ||
                (//4.2.2：けれども
-                [((Node *)(arrPhrase[i][cntArrPhrase_i-2])).surface isEqualToString:@"けれども"]
+                [((Node *)(arrPhrase[i][(cntArrPhrase_i>3?cntArrPhrase_i:2)-2])).surface isEqualToString:@"けれども"]
                 )
                ||
                (//4.2.3：ますが
                 [((Node *)(arrPhrase[i][(cntArrPhrase_i>4?cntArrPhrase_i:3)-3])).surface isEqualToString:@"ます"] &&
-                [((Node *)(arrPhrase[i][cntArrPhrase_i-2])).surface isEqualToString:@"が"]
+                [((Node *)(arrPhrase[i][(cntArrPhrase_i>3?cntArrPhrase_i:2)-2])).surface isEqualToString:@"が"]
+                )
+               ||
+               (//4.2.3(派生)：〜だが
+                [((Node *)(arrPhrase[i][(cntArrPhrase_i>4?cntArrPhrase_i:3)-3])).surface isEqualToString:@"だ"] &&
+                [((Node *)(arrPhrase[i][(cntArrPhrase_i>3?cntArrPhrase_i:2)-2])).surface isEqualToString:@"が"]
                 )
                ||
                (//4.2.4：ですが
                 [((Node *)(arrPhrase[i][(cntArrPhrase_i>4?cntArrPhrase_i:3)-3])).surface isEqualToString:@"です"] &&
-                [((Node *)(arrPhrase[i][cntArrPhrase_i-2])).surface isEqualToString:@"が"]
+                [((Node *)(arrPhrase[i][(cntArrPhrase_i>3?cntArrPhrase_i:2)-2])).surface isEqualToString:@"が"]
                 )
                ||
                (//4.2.5：ましたが
                 [((Node *)(arrPhrase[i][(cntArrPhrase_i>5?cntArrPhrase_i:4)-4])).surface isEqualToString:@"まし"] &&
                 [((Node *)(arrPhrase[i][(cntArrPhrase_i>4?cntArrPhrase_i:3)-3])).surface isEqualToString:@"た"] &&
-                [((Node *)(arrPhrase[i][cntArrPhrase_i-2])).surface isEqualToString:@"が"]
+                [((Node *)(arrPhrase[i][(cntArrPhrase_i>3?cntArrPhrase_i:2)-2])).surface isEqualToString:@"が"]
                 )
                ||
                (//4.2.6：が
-                [((Node *)(arrPhrase[i][cntArrPhrase_i-2])).surface isEqualToString:@"が"] &&
-                [((Node *)(arrPhrase[i][cntArrPhrase_i-2])).features[1] isEqualToString:@"接続助詞"]//格助詞ではないことを区別するため
+                [((Node *)(arrPhrase[i][(cntArrPhrase_i>3?cntArrPhrase_i:2)-2])).surface isEqualToString:@"が"] &&
+                [((Node *)(arrPhrase[i][(cntArrPhrase_i>3?cntArrPhrase_i:2)-2])).features[1] isEqualToString:@"接続助詞"]//格助詞ではないことを区別するため
                 )
                ||
                (//4.2.7：けど
-                [((Node *)(arrPhrase[i][cntArrPhrase_i-2])).surface isEqualToString:@"けど"]
+                [((Node *)(arrPhrase[i][(cntArrPhrase_i>3?cntArrPhrase_i:2)-2])).surface isEqualToString:@"けど"]
                 )
 
                ){
@@ -2434,7 +2441,7 @@ NSMutableArray *arrAllTokenNode;//重要語句、副詞、助詞、形容詞、�
         return strAbst;
         
         
-    }
+    }//autopoolrelease
     
     
     
@@ -2631,18 +2638,18 @@ NSMutableArray *arrAllTokenNode;//重要語句、副詞、助詞、形容詞、�
             //NSMutableArray * _arrNode = (NSMutableArray *)[self getNode:_arrPhrase[i]];
             
             //テスト:文節で区切りたい文言を調べたいときに調べるため、文末の形態素を調べる
-            NSLog(@"文節の末尾:%@=0%@,1%@,2%@,3%@,4%@,5%@,6%@,7%@,8%@",
-                  ((Node *)_arrNode[[_arrNode count]-1]).surface,
-                  ((Node *)_arrNode[[_arrNode count]-1]).features[0],
-                  ((Node *)_arrNode[[_arrNode count]-1]).features[1],
-                  ((Node *)_arrNode[[_arrNode count]-1]).features[2],
-                  ((Node *)_arrNode[[_arrNode count]-1]).features[3],
-                  ((Node *)_arrNode[[_arrNode count]-1]).features[4],
-                  ((Node *)_arrNode[[_arrNode count]-1]).features[5],
-                  ((Node *)_arrNode[[_arrNode count]-1]).features[6],
-                  ((Node *)_arrNode[[_arrNode count]-1]).features[7],
-                  ((Node *)_arrNode[[_arrNode count]-1]).features[8]
-                  );
+//            NSLog(@"文節の末尾:%@=0%@,1%@,2%@,3%@,4%@,5%@,6%@,7%@,8%@",
+//                  ((Node *)_arrNode[[_arrNode count]-1]).surface,
+//                  ((Node *)_arrNode[[_arrNode count]-1]).features[0],
+//                  ((Node *)_arrNode[[_arrNode count]-1]).features[1],
+//                  ((Node *)_arrNode[[_arrNode count]-1]).features[2],
+//                  ((Node *)_arrNode[[_arrNode count]-1]).features[3],
+//                  ((Node *)_arrNode[[_arrNode count]-1]).features[4],
+//                  ((Node *)_arrNode[[_arrNode count]-1]).features[5],
+//                  ((Node *)_arrNode[[_arrNode count]-1]).features[6],
+//                  ((Node *)_arrNode[[_arrNode count]-1]).features[7],
+//                  ((Node *)_arrNode[[_arrNode count]-1]).features[8]
+//                  );
             
             //各文節内の最後の形態素の品詞が接続助詞でない場合は後ろのフレーズ(文節)に接続する
             if(!
