@@ -33,7 +33,7 @@ int noStatus;//現在の状態(どの区切りか)を判別:最初は一番左�
 
 -(id)init{
     self = [super init];
-    NSLog(@"init");
+    NSLog(@"init from ViewController");
     if(self){
         
         
@@ -232,30 +232,36 @@ int noStatus;//現在の状態(どの区切りか)を判別:最初は一番左�
             
             //ループで新しい記事から_noIDを取得していく:取得出来なかった場合はnilを返すので判別できるようにNSNumber型にしておく
             
-            NSNumber *_noIDNumber =
-            [NSNumber numberWithInt:
-             [DatabaseManage
+//            NSNumber *_noIDNumber =
+//            [NSNumber numberWithInt:
+//             [DatabaseManage
+//             getLastIDFromDBUnder:_noID
+//             category:category]];
+            NSString *_noIDNumber =
+            [DatabaseManage
              getLastIDFromDBUnder:_noID
-             category:category]];
+             category:category];
             
             //テスト
 //            NSNumber *_noIDNumber =
 //            [NSNumber numberWithInteger:14227];
-            
+            NSLog(@"_noIDNumber = %@", _noIDNumber);
             
             if(_noIDNumber== nil ||
                [_noIDNumber isEqual:[NSNull null]]){
                 
-                NSLog(@"idが取得出来ませんでした。終了します。");
-                return;
-            }else{
-                if(_noID != [_noIDNumber intValue]){
-                    NSLog(@"前回取得id%d, 今回%d", [_noIDNumber intValue], _noID);
+                NSLog(@"idが取得出来ませんでした。再取得します。");
+                j--;//ループ継続のため
+                continue;
+            }else{//何らかのidが文字列として取得できた場合
+//                if(_noID != [_noIDNumber intValue]){
+//                    NSLog(@"前回取得id%d, 今回%d", [_noIDNumber intValue], _noID);
                     _noID = [_noIDNumber intValue];
-                }else{
-                    NSLog(@"前回取得したidと同じ番号%dを取得したので終了します", _noID);
-                    return;
-                }
+//                }else{
+//                    NSLog(@"前回取得したidと同じ番号%dを取得したので再度取得し直します", _noID);
+//                    j--;//ループ継続のため
+//                    continue;
+//                }
                 
 //                NSLog(@"取得したidは%d", _noID);
             }
@@ -365,7 +371,7 @@ int noStatus;//現在の状態(どの区切りか)を判別:最初は一番左�
     
     
     //要約文チェック(テスト)モードなら自動更新せずに記事セルをタップして実行させるビューを連続して自動で実行させる
-    [self dispNextViewController:0];
+    [self dispNextViewController:0];//TextViewControllerを表示
 #endif//#IFNDEF ABSTRACTION_TEST
     
 }

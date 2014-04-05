@@ -82,7 +82,7 @@
 
 
 //指定したカテゴリ(DBカラム名：category)内で、指定したID以下で最大のidを返す
-+(int)getLastIDFromDBUnder:(int)_idNo
++(NSString *)getLastIDFromDBUnder:(int)_idNo
                   category:(int)_category{
     
     NSMutableDictionary *dict = [NSMutableDictionary dictionaryWithCapacity:0];
@@ -104,7 +104,7 @@
                                            returningResponse:&response
                                                        error:&error];
     if(error){
-        NSLog(@"同期通信失敗 at getLastIDFromDBUnder");
+        NSLog(@"同期通信失敗 at getLastIDFromDBUnder:error=%@", error);
         return nil;
     }else{
         NSLog(@"同期通信成功");
@@ -119,7 +119,7 @@
     NSLog(@"getValueFromDB = %@", resultValue);
     
     //ない場合は(null)が返ってくるのでint変換すると0になる(ゼロはDB上で存在しないid)
-    return [resultValue integerValue];
+    return resultValue;
 }
 
 
@@ -277,8 +277,8 @@
     // 作成した文字列をUTF-8で符号化する
     NSData *data;
     data = [str dataUsingEncoding:NSUTF8StringEncoding];
-    NSLog(@"str = %@ from databasemanage.m", str);//ex.str = id=1&item=title
-    NSLog(@"return data(NSData型) = %@", data);//ex.return data = <69643d31 26697465 6d3d7469 746c65>
+    NSLog(@"str = \"%@\" from databasemanage.m", str);//ex.str = id=1&item=title
+    NSLog(@"return data(NSData型) = \"%@\" ", data);//ex.return data = <69643d31 26697465 6d3d7469 746c65>
     return data;
 }
 
