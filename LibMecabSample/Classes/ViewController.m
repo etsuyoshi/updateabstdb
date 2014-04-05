@@ -253,16 +253,8 @@ int noStatus;//現在の状態(どの区切りか)を判別:最初は一番左�
                 NSLog(@"idが取得出来ませんでした。再取得します。");
                 j--;//ループ継続のため
                 continue;
-            }else{//何らかのidが文字列として取得できた場合
-//                if(_noID != [_noIDNumber intValue]){
-//                    NSLog(@"前回取得id%d, 今回%d", [_noIDNumber intValue], _noID);
-                    _noID = [_noIDNumber intValue];
-//                }else{
-//                    NSLog(@"前回取得したidと同じ番号%dを取得したので再度取得し直します", _noID);
-//                    j--;//ループ継続のため
-//                    continue;
-//                }
-                
+            }else{//何らかのidが文字列として取得できた場合(文字列から数値への変換が可能かどうかの判定は未実施)
+                _noID = [_noIDNumber intValue];
 //                NSLog(@"取得したidは%d", _noID);
             }
             //    @"id",
@@ -280,7 +272,7 @@ int noStatus;//現在の状態(どの区切りか)を判別:最初は一番左�
             
             //上記キー値を元にデータを取得
             NSDictionary *dictTmp = [DatabaseManage getRecordFromDBAt:_noID];
-            NSString *strReturnBody = [dictTmp objectForKey:@"body"];
+            NSString *strReturnBody = [dictTmp objectForKey:@"body"];//シングルクオートやダブルクオートがある場合は誤動作回避のため置換されている前提
             NSString *strTitle = [dictTmp objectForKey:@"title"];
             _noID = [[dictTmp objectForKey:@"id"] integerValue];
             NSLog(@"strTmp = %@", strReturnBody);

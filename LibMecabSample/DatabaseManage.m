@@ -60,7 +60,10 @@
         
         //カラムに対応するだけループしてデータを取り出す
         NSMutableArray *arrReturned = [NSMutableArray array];
+        
         for(id columnName in arrColumn){
+            
+            
             //id１のみ取り出す
             [arrReturned addObject:
              [self getValueFromDB:[NSString stringWithFormat:@"%d", idNo]
@@ -100,6 +103,7 @@
     
     NSURLResponse *response;
     NSError *error = nil;
+    NSLog(@"id取得中...");
     NSData *result = [NSURLConnection sendSynchronousRequest:req
                                            returningResponse:&response
                                                        error:&error];
@@ -107,6 +111,7 @@
         NSLog(@"同期通信失敗 at getLastIDFromDBUnder:error=%@", error);
         return nil;
     }else{
+
         NSLog(@"同期通信成功");
     }
     
@@ -115,6 +120,18 @@
     [[NSString alloc]
      initWithData:result
      encoding:NSUTF8StringEncoding];//phpファイルのechoが返って来る
+    
+    //取得した文字列が整数値かどうか判定
+//    NSCharacterSet *stringCharacterSet = [NSCharacterSet characterSetWithCharactersInString:@"0123456789"];
+    NSCharacterSet *stringCharacterSet = [NSCharacterSet characterSetWithCharactersInString:resultValue];
+    NSCharacterSet *digitCharacterSet = [NSCharacterSet decimalDigitCharacterSet];
+    if ([digitCharacterSet isSupersetOfSet:stringCharacterSet]) {
+        NSLog(@"数値であることを確認");
+        
+    } else {
+        NSLog(@"数値ではないのでnilを返す：resultValue = %@", resultValue);
+        return nil;
+    }
     
     NSLog(@"getValueFromDB = %@", resultValue);
     
@@ -154,6 +171,25 @@
     
     NSString* resultString = [[NSString alloc] initWithData:result
                                                    encoding:NSUTF8StringEncoding];//phpファイルのechoが返って来る
+    NSLog(@"resultString = \"%@\" ", resultString);
+    //シングルクオートやダブルクオートがある場合は誤動作回避のため置換
+    if([resultString rangeOfString:@"\'"].location != NSNotFound){
+        NSLog(@"シングルクオーテーションが存在：sql誤動作を回避するため大文字に変換します");
+        resultString = [resultString stringByReplacingOccurrencesOfString:@"'"//半角
+                                                            withString:@"’"];//全角
+        
+        NSLog(@"修正後newValue = %@", resultString);
+    }
+    
+    if([resultString rangeOfString:@"\""].location != NSNotFound){
+        NSLog(@"ダブルクオーテーションが存在：sql誤動作を回避するため大文字に変換します");
+        resultString = [resultString stringByReplacingOccurrencesOfString:@""""//半角
+                                                            withString:@"’"];//全角
+        
+        NSLog(@"修正後newValue = %@", resultString);
+    }
+    
+    
     NSLog(@"getValueFromDB = %@", resultString);
     
     return resultString;
@@ -172,12 +208,19 @@
         return false;
     }
     
-    //文字列にシングルクオーテーション「'」がある場合には除外する(sqlの文字列終了記号なので誤った実行がされてしまう)
-    //仮対応：本来ならシングルクオーテーション単体で存在する場合はエスケープシーケンスを付与。
+    //文字列にクオーテーション「'」や「"」がある場合には全角’に置換する(sqlの文字列終了記号なので誤った実行がされてしまう)
     NSString *_newValue = newValue_arg;
     if([_newValue rangeOfString:@"\'"].location != NSNotFound){
         NSLog(@"シングルクオーテーションが存在：sql誤動作を回避するため大文字に変換します");
         _newValue = [newValue_arg stringByReplacingOccurrencesOfString:@"'"//半角
+                                                            withString:@"’"];//全角
+        
+        NSLog(@"修正後newValue = %@", _newValue);
+    }
+    
+    if([_newValue rangeOfString:@""""].location != NSNotFound){
+        NSLog(@"ダブルクオーテーションが存在：sql誤動作を回避するため大文字に変換します");
+        _newValue = [newValue_arg stringByReplacingOccurrencesOfString:@"\""//半角
                                                             withString:@"’"];//全角
         
         NSLog(@"修正後newValue = %@", _newValue);
