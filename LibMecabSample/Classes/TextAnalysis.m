@@ -1045,6 +1045,14 @@ NSMutableArray *arrAllTokenNode;//重要語句、副詞、助詞、形容詞、�
 //        }
         
         
+        //改行を削除
+        //「．．．とは？」を削除
+        if([((Node *)[[arrPhrase lastObject] lastObject]).surface isEqualToString:@"とは？"]){
+            [arrPhrase removeObjectAtIndex:(int)[arrPhrase count]-1];
+            return nil;
+        }
+        
+        
         //以下の93のルールを適用する
         //https://docs.google.com/spreadsheets/d/1rijl1-ewSYADnznTr4LLBvlha8v6weZ_hrPHH0nw5NY/edit#gid=0
         
@@ -2255,6 +2263,9 @@ NSMutableArray *arrAllTokenNode;//重要語句、副詞、助詞、形容詞、�
                 }
             }
         }
+        
+        
+        
         
         //確認用出力コード
         for(int i = 0;i < [arrPhrase count];i++){

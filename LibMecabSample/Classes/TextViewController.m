@@ -335,7 +335,7 @@ clickedButtonAtIndex:(NSInteger)buttonIndex {
     
     //本来ならこの後にカテゴリを追加する
     //...
-    
+    NSLog(@"aaa");//削除予定
     
 }
 

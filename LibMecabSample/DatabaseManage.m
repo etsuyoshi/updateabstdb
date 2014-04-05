@@ -176,11 +176,9 @@
     //仮対応：本来ならシングルクオーテーション単体で存在する場合はエスケープシーケンスを付与。
     NSString *_newValue = newValue_arg;
     if([_newValue rangeOfString:@"\'"].location != NSNotFound){
-        NSLog(@"シングルクオーテーションが存在しています");
-        NSLog(@"修正前newValue = %@", newValue_arg);
-        //未対応！：なぜか以下でシングルクオーテーションをシングルクオートx２「''」に変換できない！！理由不明！！
-        [_newValue stringByReplacingOccurrencesOfString:@"\'"
-                                            withString:@"''"];
+        NSLog(@"シングルクオーテーションが存在：sql誤動作を回避するため大文字に変換します");
+        _newValue = [newValue_arg stringByReplacingOccurrencesOfString:@"'"//半角
+                                                            withString:@"’"];//全角
         
         NSLog(@"修正後newValue = %@", _newValue);
     }
@@ -214,7 +212,8 @@
         NSLog(@"同期通信失敗 at updateValueToDB");
         return false;
     }else{
-        NSLog(@"同期通信成功");
+        NSLog(@"同期通信成功:user_id:%@,column:%@,value:%@",
+              user_id, column, _newValue);
         
         
         resultString = [[NSString alloc]

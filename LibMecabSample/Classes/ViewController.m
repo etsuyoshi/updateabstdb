@@ -37,6 +37,18 @@ int noStatus;//現在の状態(どの区切りか)を判別:最初は一番左�
     if(self){
         
         
+        //test
+//        NSString *str = @"it's";
+//        if([str rangeOfString:@"\'"].location != NSNotFound){
+//            NSLog(@"シングルクオーテーションが存在しています");
+//            NSLog(@"修正前Value = %@", str);
+//            //未対応！：なぜか以下でシングルクオーテーションをシングルクオートx２「''」に変換できない！！理由不明！！
+//            str = [str stringByReplacingOccurrencesOfString:@"'"
+//                                           withString:@"''"];
+//            
+//            NSLog(@"修正後newValue = %@", str);
+//        }
+        
     }
     
     return self;
@@ -218,16 +230,17 @@ int noStatus;//現在の状態(どの区切りか)を判別:最初は一番左�
         for(int j = 0;j < MIN(numArticleInCategory, MaxRecordEveryPage);j++){//各テーブルにセルを配置
             
             
-            //ループで新しい記事から_noIDを取得していく
-//            _noID = [DatabaseManage
-//                     getLastIDFromDBUnder:_noID
-//                     category:category];
+            //ループで新しい記事から_noIDを取得していく:取得出来なかった場合はnilを返すので判別できるようにNSNumber型にしておく
             
             NSNumber *_noIDNumber =
             [NSNumber numberWithInt:
              [DatabaseManage
              getLastIDFromDBUnder:_noID
              category:category]];
+            
+            //テスト
+//            NSNumber *_noIDNumber =
+//            [NSNumber numberWithInteger:14227];
             
             
             if(_noIDNumber== nil ||
