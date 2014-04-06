@@ -12,7 +12,7 @@
 
 @property (nonatomic) int noID;
 @property (nonatomic) NSString *title;
-//@property (nonatomic) NSString *text;
+@property (nonatomic) NSString *text;
 
 @property (nonatomic) NSArray *arrImportantSentence;
 @property (nonatomic) NSArray *arrImportantNode;

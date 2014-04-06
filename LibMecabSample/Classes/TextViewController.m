@@ -15,9 +15,9 @@
 @implementation TextViewController
 
 @synthesize idNo;
-@synthesize strTitle;
-@synthesize strText;
-@synthesize strKeyword;
+@synthesize strTop;
+@synthesize strMiddle;
+@synthesize strBottom;
 
 UIButton *returnButton;//戻る
 UIButton *uploadButton;//ブログへアップロードする
@@ -36,7 +36,7 @@ UIButton *uploadButton;//ブログへアップロードする
     if(self){
         
         self.idNo = articleData.noID;
-        self.strTitle = articleData.title;
+        self.strTop = articleData.title;
         
         
 //        NSArray *_arrRandomWord =
@@ -73,7 +73,7 @@ UIButton *uploadButton;//ブログへアップロードする
                         @"%@,%@",_strText,articleData.arrImportantSentence[i]];
         }
         
-        self.strText = _strText;
+        self.strMiddle = _strText;
         
         
         
@@ -183,11 +183,12 @@ UIButton *uploadButton;//ブログへアップロードする
                            ((Node *)articleData.arrImportantNode[i]).surface];
         }
 
-        self.strKeyword = _strKeyword;
+//        self.strBottom = _strKeyword;
+        self.strBottom = articleData.text;
         
-        NSLog(@"strTitle=%@", self.strTitle);
-        NSLog(@"strText=%@", self.strText);
-        NSLog(@"strKeyword=%@", self.strKeyword);
+        NSLog(@"strTitle=%@", self.strTop);
+        NSLog(@"strText=%@", self.strMiddle);
+        NSLog(@"strKeyword=%@", self.strBottom);
         
     }//if(self)
     
@@ -219,7 +220,7 @@ UIButton *uploadButton;//ブログへアップロードする
     
     //タイトル
     UILabel *lblTitle = [[UILabel alloc]initWithFrame:CGRectMake(0, 90, self.view.bounds.size.width, 50)];
-    lblTitle.text = self.strTitle;
+    lblTitle.text = self.strTop;
     lblTitle.textColor = [UIColor blackColor];
     lblTitle.backgroundColor = [UIColor colorWithRed:1.0 green:0 blue:0 alpha:.5f];
     lblTitle.numberOfLines = 1;
@@ -228,7 +229,7 @@ UIButton *uploadButton;//ブログへアップロードする
     //本文
     UILabel *lblText=[[UILabel alloc]initWithFrame:CGRectMake(0, lblTitle.frame.origin.y + lblTitle.bounds.size.height,
                                                               self.view.bounds.size.width, 200)];
-    lblText.text = self.strText;
+    lblText.text = self.strMiddle;
     lblText.textColor = [UIColor blackColor];
     lblText.backgroundColor=[UIColor colorWithRed:0 green:1.0f blue:0 alpha:0.5f];//[UIColor clearColor];
     lblText.numberOfLines = 0;
@@ -238,7 +239,7 @@ UIButton *uploadButton;//ブログへアップロードする
     //キーワード
     UILabel *lblKeyword=[[UILabel alloc]initWithFrame:CGRectMake(0, lblText.frame.origin.y + lblText.bounds.size.height,
                                                               self.view.bounds.size.width, 300)];
-    lblKeyword.text = self.strKeyword;
+    lblKeyword.text = self.strBottom;
     lblKeyword.textColor = [UIColor blackColor];
     lblKeyword.backgroundColor=[UIColor colorWithRed:0 green:0 blue:1.0f alpha:0.5f];//[UIColor clearColor];
     lblKeyword.numberOfLines = 0;
@@ -321,17 +322,17 @@ clickedButtonAtIndex:(NSInteger)buttonIndex {
 }
 
 -(void)updateToDB{
-    NSLog(@"update:abstract=%@", self.strText);
-    NSLog(@"update:keyword=%@", self.strKeyword);
+    NSLog(@"update:abstract=%@", self.strMiddle);
+    NSLog(@"update:keyword=%@", self.strBottom);
     [DatabaseManage
      updateValueToDB:[NSString stringWithFormat:@"%d",self.idNo]
      column:@"abstforblog"
-     newVal:self.strText];//要約文を結合したもの
+     newVal:self.strMiddle];//要約文を結合したもの
     
     [DatabaseManage
      updateValueToDB:[NSString stringWithFormat:@"%d",self.idNo]
      column:@"keywordblog"
-     newVal:self.strKeyword];//キーワードを結合したもの
+     newVal:self.strBottom];//キーワードを結合したもの
     
     //本来ならこの後にカテゴリを追加する
     //...

@@ -285,7 +285,7 @@ int noStatus;//現在の状態(どの区切りか)を判別:最初は一番左�
             NSDictionary *dictTmp = [DatabaseManage getRecordFromDBAt:_noID];
             NSString *strReturnBody = [dictTmp objectForKey:@"body"];//シングルクオートやダブルクオートがある場合は誤動作回避のため置換されている前提
             NSString *strTitle = [dictTmp objectForKey:@"title"];
-            _noID = [[dictTmp objectForKey:@"id"] integerValue];
+            _noID = (int)[[dictTmp objectForKey:@"id"] integerValue];
             NSLog(@"strTmp = %@", strReturnBody);
             
             //http://qiita.com/yimajo/items/c9338a715016e7a812b1
@@ -327,6 +327,7 @@ int noStatus;//現在の状態(どの区切りか)を判別:最初は一番左�
             ArticleData *articleData = [[ArticleData alloc]init];
             articleData.noID = _noID;
             articleData.title = strTitle;
+            articleData.text = strReturnBody;
             articleData.arrImportantNode = arrImportantNode;
             articleData.arrImportantSentence = arrImportantSentence;
             

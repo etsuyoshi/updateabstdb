@@ -11,7 +11,7 @@
 @implementation ArticleData
 
 @synthesize noID;
-//@synthesize text;
+@synthesize text;
 @synthesize title;
 
 @synthesize arrImportantSentence;

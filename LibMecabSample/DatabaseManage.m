@@ -89,7 +89,35 @@
                   category:(int)_category{
     
     
-    //複合クエリだと遅いので、テスト用に試行錯誤によるid取得を試みる
+    //複合クエリだと遅いので、テスト用に試行錯誤(一つずつidを取得してabstが入っているか確認する方法)によるid取得を試みる
+    Boolean flg_test = false;
+    if(flg_test){
+        NSString *_strIdForTest = nil;
+        int _id = _idNo;
+        
+        //以下のやり方は時間がかかる
+        while(_id > 0){
+            _strIdForTest = [self getValueFromDB:[NSString stringWithFormat:@"%d",_id]
+                                          column:@"id"];
+            
+            if(_strIdForTest != nil){
+                NSString *strAbst =
+                [self getValueFromDB:_strIdForTest
+                              column:@"abstforblog"];
+                
+                if(strAbst != nil && !([strAbst isEqual:[NSNull null]]) && ![strAbst isEqualToString:@""]){
+                    NSLog(@"strAbst = %@", strAbst);
+                    NSLog(@"break");
+                    break;
+                }
+            }
+            _id--;
+            
+            NSLog(@"id=%d", _id);
+        }
+        return _strIdForTest;
+    }
+    //testmode終了
     
     
     NSMutableDictionary *dict = [NSMutableDictionary dictionaryWithCapacity:0];
@@ -146,7 +174,8 @@
 
 
 //指定したID(user_id)のレコードにおけるcolumnを取り出す
-+(NSString *)getValueFromDB:(NSString *)user_id column:(NSString *)column{
++(NSString *)getValueFromDB:(NSString *)user_id
+                     column:(NSString *)column{
     
     //phpファイルの以下の変数にそれぞれ格納される：$sql = "select $_POST[item] from dbusermanage where id = '$_POST[id]'";
     NSMutableDictionary *dict = [NSMutableDictionary dictionaryWithCapacity:0];

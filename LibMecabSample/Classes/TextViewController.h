@@ -13,9 +13,9 @@
 
 @interface TextViewController : UIViewController
 @property (nonatomic) int idNo;
-@property (nonatomic) NSString *strTitle;
-@property (nonatomic, copy) NSString *strText;
-@property (nonatomic) NSString *strKeyword;
+@property (nonatomic) NSString *strTop;
+@property (nonatomic) NSString *strMiddle;
+@property (nonatomic) NSString *strBottom;
 
 -(id)initWithArticle:(ArticleData *)articleData;
 
