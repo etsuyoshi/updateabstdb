@@ -88,6 +88,10 @@
 +(NSString *)getLastIDFromDBUnder:(int)_idNo
                   category:(int)_category{
     
+    
+    //複合クエリだと遅いので、テスト用に試行錯誤によるid取得を試みる
+    
+    
     NSMutableDictionary *dict = [NSMutableDictionary dictionaryWithCapacity:0];
     [dict setObject:[NSString stringWithFormat:@"%d",_idNo] forKey:@"id"];
     [dict setObject:[NSString stringWithFormat:@"%d",_category] forKey:@"category"];
