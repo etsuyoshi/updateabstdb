@@ -29,6 +29,8 @@ BackgroundView *backgroundView;
 CGPoint pntStartDrag;
 NSMutableArray *arrArticleData;
 
+UIActivityIndicatorView *indicator;
+
 int noStatus;//現在の状態(どの区切りか)を判別:最初は一番左の状態
 
 -(id)init{
@@ -36,6 +38,7 @@ int noStatus;//現在の状態(どの区切りか)を判別:最初は一番左�
     NSLog(@"init from ViewController");
     if(self){
         
+        indicator = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleWhiteLarge];
         
         //test
 //        NSString *str = @"it's";
@@ -150,6 +153,14 @@ int noStatus;//現在の状態(どの区切りか)を判別:最初は一番左�
 
 -(void)viewDidAppear:(BOOL)animated{
     [super viewDidAppear:animated];
+    
+    
+    //インディケータを張り付け
+    [self.view addSubview:indicator];
+    [self.view bringSubviewToFront:indicator];
+    
+    //取得中のインジケータースタート
+    [indicator startAnimating];
     
 #ifdef ABSTRACTION_TEST
     
@@ -350,13 +361,14 @@ int noStatus;//現在の状態(どの区切りか)を判別:最初は一番左�
             countArticle++;
         }
     }
+    //インジケータを止める
+    [indicator stopAnimating];
+    
     
     //一時しのぎ：本来ならばテキストだけ変えるとか,articleCellのみ変えるとかすべき
     [backgroundView removeFromSuperview];
     
     backgroundView = [[BackgroundView alloc]initWithTable:arrTable];
-    
-    
     
     //backgroundの表示
     [self.view addSubview:backgroundView];

@@ -98,6 +98,7 @@
     NSURL *url = [NSURL URLWithString:@"http://newsdb.lolipop.jp/tmp/dir/test/getIdLastArticle.php"];
     
     NSMutableURLRequest *req = [NSMutableURLRequest requestWithURL:url];
+    [req setTimeoutInterval:60]; //タイムアウトを10秒に設定
     [req setHTTPMethod:@"POST"];
     [req setHTTPBody:data];
     
@@ -171,12 +172,31 @@
     
     NSString* resultString = [[NSString alloc] initWithData:result
                                                    encoding:NSUTF8StringEncoding];//phpファイルのechoが返って来る
+    NSLog(@"resultString = %@", resultString);
+    //改行の置換
+    NSMutableArray *lines = [NSMutableArray array];
+//    NSString *strLine = @"";
+    [resultString enumerateLinesUsingBlock:^(NSString *line, BOOL *stop) {
+            [lines addObject:line];
+//        strLine = [NSString stringWithFormat:@"%@%@", strLine,line];
+    }];
+//    resultString = strLine;
+    resultString = @"";//一旦初期化
+    for(NSString *line in lines){
+        if([resultString isEqualToString:@""]){
+            resultString = line;
+        }else{
+            resultString = [NSString stringWithFormat:@"%@\n%@", resultString, line];
+        }
+        NSLog(@"line=%@", line);
+    }
+    
     NSLog(@"resultString = \"%@\" ", resultString);
     //シングルクオートやダブルクオートがある場合は誤動作回避のため置換
     if([resultString rangeOfString:@"\'"].location != NSNotFound){
         NSLog(@"シングルクオーテーションが存在：sql誤動作を回避するため大文字に変換します");
         resultString = [resultString stringByReplacingOccurrencesOfString:@"'"//半角
-                                                            withString:@"’"];//全角
+                                                               withString:@"’"];//全角
         
         NSLog(@"修正後newValue = %@", resultString);
     }
